@@ -72,7 +72,7 @@ else
 		if [[ $PAUSE_AT ]]; then
 			echo "Script paused for acceptance tests; press [ENTER] to continue:"
 			read proceed
-			echo "Proceed? (Y/y): "
+			echo "Proceed? (Y/N): "
 			read proceed
 			if [[ "$proceed" != "Y" && "$proceed" != "y" ]]; then
 				exit 1

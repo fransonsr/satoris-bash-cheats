@@ -1,0 +1,63 @@
+#!/bin/bash
+
+set -e
+
+usage()
+{
+	echo "USAGE: mvn-idx-build [[-h|--help]] | [[-f|--from] <project>]" 
+	echo "From WORKDIR, this script will perform a Maven build (clean install) for" 
+	echo "   all IDX directories. If one of the builds fail, the '-f'" 
+	echo "   option can be used to indicate which directory to start from,"
+	echo "   skipping previous directories."
+	echo "Depends on WORKDIR and IDX_ALL environment variables. (See"
+	echo "   the git-env script.)"
+}
+
+while :
+do
+	case "$1" in
+		-f | --from)
+			FROM="$2"
+			shift 2
+			;;
+		-h | --help)
+			usage
+			exit 1
+			;;
+		--) 		# end of all options
+			shift
+			break
+			;;
+		*) 			# no more options
+			break
+			;;
+	esac
+done
+
+do_mvn_build()
+{
+	SKIP=N
+	if [ ! -z "$FROM" ]
+	then
+		SKIP=Y
+	fi
+	
+	for PROJECT
+	do
+		if [ $SKIP == "Y" -a $PROJECT != "$FROM" ]
+		then
+			echo Skipping $PROJECT
+		else
+			SKIP=N
+			cd $PROJECT
+			mvn -T 1C clean install
+			cd ..
+		fi
+	done
+}
+
+pushd $WORKDIR
+
+time do_mvn_build $IDX_ALL
+
+popd

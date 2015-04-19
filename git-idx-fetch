@@ -1,0 +1,19 @@
+#!/bin/bash
+
+#
+# From WORKDIR, this script recursively enters all IDX
+# git repositories and performs a 'git fetch'.
+#
+
+pushd $WORKDIR
+
+for DIR in $IDX_ALL
+do
+	echo ========================
+	echo PROJECT - $DIR
+	cd $DIR
+	git fetch
+	cd ..
+done
+
+popd

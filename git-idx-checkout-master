@@ -1,0 +1,19 @@
+#!/bin/bash
+
+#
+# From WORKDIR, this script recursively enters the IDX
+# git repositories and checks out the master branch.
+#
+
+pushd $WORKDIR
+
+for DIR in $IDX_ALL
+do
+	echo ========================
+	echo PROJECT - $DIR
+	cd $DIR
+	git checkout master
+	cd ..
+done
+
+popd

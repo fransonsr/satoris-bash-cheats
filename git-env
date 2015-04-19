@@ -1,0 +1,18 @@
+#!/bin/bash
+
+#
+# Sets environment variables for other scripts. Principally, 
+# WORKDIR which is the root directory for all git projects
+# and the set of subdirectories that constitute the set of 
+# IDX repositories. Use this in .bashrc to set the environment.
+#
+
+export WORKDIR=/cygdrive/c/work/github
+
+export IDX_SUPER_POM="idx-api-super-pom"
+export IDX_API_CORE="idx-api-core"
+export IDX_API_DOMAIN="idx-api-domain"
+export IDX_V1_PROJECTS="idx-api-app idx-admin-app idx-template-app idx-swing-apps"
+export IDX_V2_PROJECTS="idx-db-migration idx-discovery idx-message idx-metric idx-orchestration idx-project idx-statistic idx-template idx-user idx-workflow"
+export IDX_PROJECTS="$IDX_V1_PROJECTS $IDX_V2_PROJECTS"
+export IDX_ALL="$IDX_SUPER_POM $IDX_API_CORE $IDX_API_DOMAIN $IDX_PROJECTS"

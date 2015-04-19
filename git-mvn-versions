@@ -1,0 +1,90 @@
+#!/bin/bash 
+
+#
+# From the current directory, this will update the Maven parent
+# pom version as well as property versions, perform a clean build,
+# check the changes into a new branch and push to the remote repository.
+# If all is successful, the local branch is deleted.
+#
+
+set -e
+
+usage() 
+{
+	echo "USAGE: git-mvn-versions [-h|--help] [-p|--pause]"
+	echo "git-mvn-versions will update the Maven parent pom version"
+	echo "   as well as property versions; perform a clean build;"
+	echo "   check the changes into a new branch and push to the"
+	echo "   remote repository. If all is successful, the local branch"
+	echo "   deleted. Options -p and --pause will pause the script to allow"
+	echo "   the running of acceptance tests."
+}
+
+isDirectoryClean()
+{
+	git diff-index --quiet HEAD --
+}
+
+BRANCH=versions-$RANDOM
+PASUE_AT=false
+
+while :
+do
+	case "$1" in
+		-p | --pause)
+			PAUSE_AT=true
+			shift
+			;;
+		-h | --help)
+			usage
+			exit 1
+			;;
+		--) 		# end of all options
+			shift
+			break
+			;;
+		*) 			# no more options
+			break
+			;;
+	esac
+done
+
+# git the latest and create a branch
+git checkout master
+git pull 
+if ! isDirectoryClean; then
+	echo master branch not clean
+	exit 1
+fi
+
+git checkout -b $BRANCH
+
+# Maven versions update
+mvn -U versions:update-parent versions:update-properties versions:commit
+
+# Build, commit, and push changes
+if isDirectoryClean; then
+	echo No version changes
+else
+	echo mvn -T 1C clean install
+	if [ -d acceptance ]; then
+		echo PAUSE_AT $PASUE_AT
+		if [[ $PAUSE_AT ]]; then
+			echo "Script paused for acceptance tests; press [ENTER] to continue:"
+			read proceed
+			echo "Proceed? (Y/y): "
+			read proceed
+			if [[ "$proceed" != "Y" && "$proceed" != "y" ]]; then
+				exit 1
+			fi
+		fi
+	fi
+	
+	git commit -am "Update versions"
+	git push -u origin $BRANCH
+fi
+
+# Back to master; clean up branch 
+git checkout master
+git branch -D $BRANCH
+echo Finished

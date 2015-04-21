@@ -11,13 +11,16 @@ set -e
 
 usage() 
 {
-	echo "USAGE: git-mvn-versions [-h|--help] [-p|--pause]"
+	echo "USAGE: git-mvn-versions [-h|--help] [-p|--pause] [-k|--keep]"
 	echo "git-mvn-versions will update the Maven parent pom version"
 	echo "   as well as property versions; perform a clean build;"
 	echo "   check the changes into a new branch and push to the"
 	echo "   remote repository. If all is successful, the local branch"
-	echo "   deleted. Options -p and --pause will pause the script to allow"
-	echo "   the running of acceptance tests."
+	echo "   deleted." 
+	echo "Options:" 
+	echo "   -p | --pause    pause the script to allow for running"
+	echo "                   acceptance tests."
+	echo "   -k | --keep     keep the git branch rather than deleting it"
 }
 
 isDirectoryClean()
@@ -26,13 +29,18 @@ isDirectoryClean()
 }
 
 BRANCH=versions-$RANDOM
-PASUE_AT=false
+PAUSE=false
+KEEP_BRANCH=false
 
 while :
 do
 	case "$1" in
 		-p | --pause)
-			PAUSE_AT=true
+			PAUSE=true
+			shift
+			;;
+		-k | --keep)
+			KEEP_BRANCH=true
 			shift
 			;;
 		-h | --help)
@@ -68,8 +76,7 @@ if isDirectoryClean; then
 else
 	echo mvn -T 1C clean install
 	if [ -d acceptance ]; then
-		echo PAUSE_AT $PASUE_AT
-		if [[ $PAUSE_AT ]]; then
+		if $PAUSE; then
 			echo "Script paused for acceptance tests; press [ENTER] to continue:"
 			read proceed
 			echo "Proceed? (Y/N): "
@@ -85,6 +92,8 @@ else
 fi
 
 # Back to master; clean up branch 
-git checkout master
-git branch -D $BRANCH
+if ! $KEEP_BRANCH; then
+	git checkout master
+	git branch -D $BRANCH
+fi
 echo Finished

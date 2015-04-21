@@ -1,0 +1,94 @@
+#!/bin/bash
+# Arguments = -r ref
+
+#set -e 
+
+usage() {
+cat << EOF
+usage: $0 options
+
+Push artifacts contained in a directory to the specified reference.
+OPTIONS:
+  -r  reference; either 'beta' or 'prod' (default: prod)
+EOF
+}
+
+REF=prod
+while getopts "hr:" OPTION
+do
+  case $OPTION in
+    h)
+      usage
+      exit 1
+      ;;
+    r)
+      REF=$OPTARG
+      ;;
+    ?)
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+if [[ -z $REF ]]; then
+  usage
+  exit 1
+fi
+
+case "$REF" in
+  beta|prod) ;;
+  *)
+    echo Reference must be one of 'stage' or 'prod'.
+    usage
+    exit 1
+    ;;
+esac
+
+REFERENCE="https://familysearch.org"
+if [[ "$REF" == "beta" ]]; then
+	REFERENCE="https://beta.familysearch.org"
+fi
+
+HEALTH=OK
+
+_assertVitals() {
+	URI=$1
+	TEMPFILE=`mktemp -p $TMPDIR vitals.XXXXXXXX`
+	RCODE=`curl -f -s $URI -o $TEMPFILE -w %{http_code}`
+	if [[ "$RCODE" != "200" ]]; then
+		echo " Service failed with error: $RCODE uri: $URI"
+		HEALTH=FAIL
+		return
+	fi
+	
+	VERSION=`grep version $TEMPFILE | cut -c17-`
+	echo "$VERSION"
+	
+	rm $TEMPFILE
+}
+
+_healthcheck() {
+        SERVER=$1
+        echo Checking server: $SERVER
+        echo ================
+        echo -n idx-api-server: ; curl -f -s $SERVER/indexing-service/api/.well-known/healthcheck/vitals > /dev/null; echo " OK"
+        echo -n adminClient: ; curl -f -s $SERVER/indexing-service/admin-app/index > /dev/null; echo " OK"
+        echo -n gedxBuilder: ; curl -f -s $SERVER/indexing-service/template-app/ > /dev/null; echo " OK"
+		echo -n swing-apps: ; curl -f -s $SERVER/indexing-service/apps/version.jsp > /dev/null ; echo " OK"
+        echo -n idx-discovery: ; _assertVitals $SERVER/indexing-service/discovery/.well-known/healthcheck/vitals
+        echo -n idx-project: ; _assertVitals $SERVER/indexing-service/project/.well-known/healthcheck/vitals
+        echo -n idx-template: ; _assertVitals $SERVER/indexing-service/template/.well-known/healthcheck/vitals
+        echo -n idx-workflow: ; _assertVitals $SERVER/indexing-service/workflow/.well-known/healthcheck/vitals
+        echo -n idx-user: ; _assertVitals $SERVER/indexing-service/user/.well-known/healthcheck/vitals
+        echo -n idx-metric: ; _assertVitals $SERVER/indexing-service/metric/.well-known/healthcheck/vitals
+        echo -n idx-statistic: ; _assertVitals $SERVER/indexing-service/statistic/.well-known/healthcheck/vitals
+        echo -n idx-message: ; _assertVitals $SERVER/indexing-service/message/.well-known/healthcheck/vitals
+        echo -n idx-orchestration: ; _assertVitals $SERVER/indexing-service/orchestration/.well-known/healthcheck/vitals
+        echo Health $HEALTH: server: $SERVER
+        echo
+}
+
+_healthcheck $REFERENCE
+
+echo Script: healthcheck: Finished

@@ -9,23 +9,29 @@
 
 set -e
 
-usage() 
-{
-	echo "USAGE: git-mvn-versions [-h|--help] [-p|--pause] [-k|--keep]"
-	echo "git-mvn-versions will update the Maven parent pom version"
-	echo "   as well as property versions; perform a clean build;"
-	echo "   check the changes into a new branch and push to the"
-	echo "   remote repository. If all is successful, the local branch"
-	echo "   deleted." 
-	echo "Options:" 
-	echo "   -p | --pause    pause the script to allow for running"
-	echo "                   acceptance tests."
-	echo "   -k | --keep     keep the git branch rather than deleting it"
+usage() {
+cat <<- EOF
+USAGE: git-mvn-versions [-h|--help] [-p|--pause] [-k|--keep]
+
+From the current directory, this script will:
+   - update the Maven parent pom version
+   - update the Maven property versions
+   - perform a clean build
+   - check the changes into a new branch
+   - push to the remote repository
+   
+If all is successful, the local branch is deleted.
+
+OPTIONS:
+   -p | --pause     pause the script to allow for running 
+                    acceptance tests
+   -k | -- keep     keep the git branch rather than deleting it
+EOF
 }
 
 isDirectoryClean()
 {
-	git diff-index --quiet HEAD --
+    git diff-index --quiet HEAD --
 }
 
 BRANCH=versions-$RANDOM
@@ -34,35 +40,35 @@ KEEP_BRANCH=false
 
 while :
 do
-	case "$1" in
-		-p | --pause)
-			PAUSE=true
-			shift
-			;;
-		-k | --keep)
-			KEEP_BRANCH=true
-			shift
-			;;
-		-h | --help)
-			usage
-			exit 1
-			;;
-		--) 		# end of all options
-			shift
-			break
-			;;
-		*) 			# no more options
-			break
-			;;
-	esac
+    case "$1" in
+        -p | --pause)
+            PAUSE=true
+            shift
+            ;;
+        -k | --keep)
+            KEEP_BRANCH=true
+            shift
+            ;;
+        -h | --help)
+            usage
+            exit 1
+            ;;
+        --)         # end of all options
+            shift
+            break
+            ;;
+        *)          # no more options
+            break
+            ;;
+    esac
 done
 
 # git the latest and create a branch
 git checkout master
 git pull 
 if ! isDirectoryClean; then
-	echo master branch not clean
-	exit 1
+    echo master branch not clean
+    exit 1
 fi
 
 git checkout -b $BRANCH
@@ -72,28 +78,28 @@ mvn -U versions:update-parent versions:update-properties versions:commit
 
 # Build, commit, and push changes
 if isDirectoryClean; then
-	echo No version changes
+    echo No version changes
 else
-	echo mvn -T 1C clean install
-	if [ -d acceptance ]; then
-		if $PAUSE; then
-			echo "Script paused for acceptance tests; press [ENTER] to continue:"
-			read proceed
-			echo "Proceed? (Y/N): "
-			read proceed
-			if [[ "$proceed" != "Y" && "$proceed" != "y" ]]; then
-				exit 1
-			fi
-		fi
-	fi
-	
-	git commit -am "Update versions"
-	git push -u origin $BRANCH
+    echo mvn -T 1C clean install
+    if [ -d acceptance ]; then
+        if $PAUSE; then
+            echo "Script paused for acceptance tests; press [ENTER] to continue:"
+            read proceed
+            echo "Proceed? (Y/N): "
+            read proceed
+            if [[ "$proceed" != "Y" && "$proceed" != "y" ]]; then
+                exit 1
+            fi
+        fi
+    fi
+    
+    git commit -am "Update versions"
+    git push -u origin $BRANCH
 fi
 
 # Back to master; clean up branch 
 if ! $KEEP_BRANCH; then
-	git checkout master
-	git branch -D $BRANCH
+    git checkout master
+    git branch -D $BRANCH
 fi
 echo Finished

@@ -11,7 +11,7 @@ set -e
 
 usage() {
 cat <<- EOF
-USAGE: git-mvn-versions [-h|--help] [-p|--pause] [-k|--keep]
+USAGE: git-mvn-versions [[-h|--help]] | [-p|--pause] [-k|--keep]
 
 From the current directory, this script will:
    - update the Maven parent pom version
@@ -26,6 +26,7 @@ OPTIONS:
    -p | --pause     pause the script to allow for running 
                     acceptance tests
    -k | -- keep     keep the git branch rather than deleting it
+   -h | -- help     display this help
 EOF
 }
 

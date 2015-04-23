@@ -1,0 +1,42 @@
+#!/bin/bash 
+
+usage() {
+	cat <<- EOF
+USAGE: atest [-h] | [-r <ref>] <service>
+
+Trigger an acceptance test execution for <service>.
+By default the reference is 'local'. Specifying 
+no options will report the test results.
+
+OPTIONS:
+	-h          display this help
+	-r <ref>    specify which testng config file to use
+                (defined as testng-<ref>.xml)
+EOF
+}
+
+REF=local
+while getopts "hr:" opt
+do
+	case "$opt" in
+		r)
+			REF=$OPTARG
+			;;
+		h)
+			usage
+			exit 1
+			;;
+	esac
+done
+
+shift $((OPTIND-1))
+
+SERVICE=$1
+if [[ -z $SERVICE ]]; then
+	curl http://localhost:8080/report
+else
+	curl -X POST http://localhost:8080/test?url=http://localhost:8080/$SERVICE\&config=testng-$REF.xml
+	echo "Test started; waiting 5 seconds for report..."
+	sleep 5
+	atest
+fi

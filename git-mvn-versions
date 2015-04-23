@@ -81,7 +81,7 @@ mvn -U versions:update-parent versions:update-properties versions:commit
 if isDirectoryClean; then
     echo No version changes
 else
-    echo mvn -T 1C clean install
+    mvn -T 1C clean install
     if [ -d acceptance ]; then
         if $PAUSE; then
             echo "Script paused for acceptance tests; press [ENTER] to continue:"

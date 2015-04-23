@@ -1,0 +1,17 @@
+#!/bin/bash 
+
+#
+# From the current directory, delete the current branch;
+# unless it is already the master branch.
+#
+
+CURRENT=`git branch | grep "\*" | cut -d" " -f2`
+
+if [[ "$CURRENT" == "master" ]]; then
+	echo Current branch is master!
+	exit 1;
+fi
+
+git branch -m killme
+git checkout -f master
+git branch -D killme

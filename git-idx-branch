@@ -6,6 +6,42 @@
 # branch.
 #
 
+usage() {
+cat <<- EOF
+USAGE: git-idx-branch [[-h|--help]] | [-c|--current]
+
+From WORKDIR, enter all IDX repository directories and report
+the current git branches.
+
+OPTIONS:
+   -c | --current   report only the current branch
+   -h | -- help     display this help
+EOF
+}
+
+CURRENT_ONLY=false
+
+while :
+do
+    case "$1" in
+        -c | --current)
+            CURRENT_ONLY=true
+            shift
+            ;;
+        -h | --help)
+            usage
+            exit 1
+            ;;
+        --)         # end of all options
+            shift
+            break
+            ;;
+        *)          # no more options
+            break
+            ;;
+    esac
+done
+
 pushd $WORKDIR
 
 for DIR in $IDX_ALL
@@ -13,7 +49,19 @@ do
 	echo ========================
 	echo PROJECT - $DIR
 	cd $DIR
-	git branch
+	if $CURRENT_ONLY; then
+		CURRENT=`git branch | grep "\*" | cut -d" " -f2`
+		if [[ "$CURRENT" == "master" ]]; then
+			PREFIX='\e[1;32m'
+			POSTFIX='\e[0m'
+		else
+			PREFIX='\e[1;31m'
+			POSTFIX='\e[0m'
+		fi
+		echo -e $PREFIX$CURRENT$POSTFIX
+	else
+		git branch
+	fi
 	cd ..
 done
 

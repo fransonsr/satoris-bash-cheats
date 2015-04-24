@@ -1,0 +1,95 @@
+#!/bin/bash
+
+#
+# Clone IDX GitHub repositories
+#
+
+METHOD=https
+CLONE_V1=true
+
+usage() {
+echo <<- EOF
+USAGE: git-clone-idx [[-h|--help]] | [--https|-ssh] [--v2]]
+
+From WORKDIR, clone the IDX GitHub repositories.
+
+OPTIONS:
+   --https       use 'https' method of cloning repositories (default)
+   --ssh         use 'ssh' method of cloning repositories
+   --v2          clone only IDX V2 repositories
+   -h | --help   display this help
+EOF
+}
+
+while :
+do
+    case "$1" in
+        --http)
+            METHOD=https
+            shift
+            ;;
+		--ssh)
+			METHOD=ssh
+			shift
+			;;
+		--v2)
+			CLONE_V1=false
+			shift
+			;;
+        -h | --help)
+            usage
+            exit 1
+            ;;
+        --)         # end of all options
+            shift
+            break
+            ;;
+        *)          # no more options
+            break
+            ;;
+    esac
+done
+
+cd $WORKDIR
+
+if [[ "$METHOD" == "https" ]]; then
+	git clone https://github.com/fs-eng/idx-api-super-pom.git
+	git clone https://github.com/fs-eng/idx-api-core.git
+	git clone https://github.com/fs-eng/idx-api-domain.git
+	git clone https://github.com/fs-eng/idx-db-migration.git
+	git clone https://github.com/fs-eng/idx-discovery.git
+	git clone https://github.com/fs-eng/idx-message.git
+	git clone https://github.com/fs-eng/idx-metric.git
+	git clone https://github.com/fs-eng/idx-orchestration.git
+	git clone https://github.com/fs-eng/idx-project.git
+	git clone https://github.com/fs-eng/idx-statistic.git
+	git clone https://github.com/fs-eng/idx-template.git
+	git clone https://github.com/fs-eng/idx-user.git
+	git clone https://github.com/fs-eng/idx-workflow.git
+	if CLONE_V1; then
+		git clone https://github.com/fs-eng/idx-api-app.git
+		git clone https://github.com/fs-eng/idx-admin-app.git
+		git clone https://github.com/fs-eng/idx-template-app.git
+		git clone https://github.com/fs-eng/idx-swing-apps.git
+	fi
+else
+	git clone git@github.com:fs-eng/idx-api-super-pom.git
+	git clone git@github.com:fs-eng/idx-api-core.git
+	git clone git@github.com:fs-eng/idx-api-domain.git
+	git clone git@github.com:fs-eng/idx-db-migration.git
+	git clone git@github.com:fs-eng/idx-discovery.git
+	git clone git@github.com:fs-eng/idx-message.git
+	git clone git@github.com:fs-eng/idx-metric.git
+	git clone git@github.com:fs-eng/idx-orchestration.git
+	git clone git@github.com:fs-eng/idx-project.git
+	git clone git@github.com:fs-eng/idx-statistic.git
+	git clone git@github.com:fs-eng/idx-template.git
+	git clone git@github.com:fs-eng/idx-user.git
+	git clone git@github.com:fs-eng/idx-workflow.git
+	if CLONE_V1; then
+		git clone git@github.com:fs-eng/idx-api-app.git
+		git clone git@github.com:fs-eng/idx-admin-app.git
+		git clone git@github.com:fs-eng/idx-template.git
+		git clone git@github.com:fs-eng/idx-swing-apps.git
+	fi
+fi

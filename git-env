@@ -14,6 +14,6 @@ export IDX_API_CORE="idx-api-core"
 export IDX_API_DOMAIN="idx-api-domain"
 export IDX_V1_PROJECTS="idx-api-app idx-admin-app idx-template-app idx-swing-apps"
 export IDX_V2_VERTICALS="idx-discovery idx-message idx-metric idx-orchestration idx-project idx-statistic idx-template idx-user idx-workflow"
-export IDX_V2_PROJECTS="idx-db-migration" $IDX_V2_VERTICALS
+export IDX_V2_PROJECTS="idx-db-migration $IDX_V2_VERTICALS"
 export IDX_PROJECTS="$IDX_V1_PROJECTS $IDX_V2_PROJECTS"
 export IDX_ALL="$IDX_SUPER_POM $IDX_API_CORE $IDX_API_DOMAIN $IDX_PROJECTS"

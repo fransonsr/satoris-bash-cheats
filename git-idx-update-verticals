@@ -1,0 +1,58 @@
+#!/bin/bash 
+
+set -e
+
+usage() {
+	cat <<- EOF
+USAGE: git-idx-update-verticals [[-h|--help]] | [-l|--local] [-p|--pause]
+
+From WORKDIR, enter all IDX_V2_VERTICALS and update the versions
+via the 'git-mvn-versions' command.
+
+OPTIONS:
+   -p | --pause     pause in each repo to allow for acceptance tests
+   -l | --local     make only local repo changes; i.e., don't 
+                    push the modified branch to the remote repos
+   -h | --help      display this help
+EOF
+}
+
+REPOS=$IDX_V2_VERTICALS
+
+while :
+do
+    case "$1" in
+        -p | --pause)
+            MY_OPTIONS="$MY_OPTIONS --pause"
+            shift
+            ;;
+		-l | --local)
+			MY_OPTIONS="$MY_OPTIONS --local"
+			shift
+			;;
+        -h | --help)
+            usage
+            exit 1
+            ;;
+        --)         # end of all options
+            shift
+            break
+            ;;
+        *)          # no more options
+            break
+            ;;
+    esac
+done
+
+pushd $WORKDIR
+
+for REPO in $REPOS
+do
+	echo ========================
+	echo PROJECT - $REPO
+	cd $REPO
+	git-mvn-versions $MY_OPTIONS
+	cd ..
+done
+
+popd

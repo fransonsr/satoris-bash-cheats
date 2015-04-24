@@ -11,22 +11,23 @@ set -e
 
 usage() {
 cat <<- EOF
-USAGE: git-mvn-versions [[-h|--help]] | [-p|--pause] [-k|--keep]
+USAGE: git-mvn-versions [[-h|--help]] | [-p|--pause] [-k|--keep] [-l|--local]
 
 From the current directory, this script will:
    - update the Maven parent pom version
    - update the Maven property versions
    - perform a clean build
    - check the changes into a new branch
-   - push to the remote repository
+   - push to the remote repository 
    
 If all is successful, the local branch is deleted.
 
 OPTIONS:
    -p | --pause     pause the script to allow for running 
                     acceptance tests
-   -k | -- keep     keep the git branch rather than deleting it
-   -h | -- help     display this help
+   -k | --keep      keep the git branch rather than deleting it
+   -l | --local     make local repo changes only; implies --keep
+   -h | --help      display this help
 EOF
 }
 
@@ -38,6 +39,7 @@ isDirectoryClean()
 BRANCH=versions-$RANDOM
 PAUSE=false
 KEEP_BRANCH=false
+PUSH_REOMTE=true
 
 while :
 do
@@ -50,6 +52,11 @@ do
             KEEP_BRANCH=true
             shift
             ;;
+		-l | --local)
+			KEEP_BRANCH=true
+			PUSH_REMOTE=false
+			shift
+			;;
         -h | --help)
             usage
             exit 1
@@ -95,7 +102,9 @@ else
     fi
     
     git commit -am "Update versions"
-    git push -u origin $BRANCH
+	if $PUSH_REMOTE; then
+		git push -u origin $BRANCH
+	fi
 fi
 
 # Back to master; clean up branch 

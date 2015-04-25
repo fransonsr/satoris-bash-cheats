@@ -4,7 +4,7 @@ set -e
 
 usage() {
 	cat <<- EOF
-USAGE: git-idx-update-verticals [[-h|--help]] | [-l|--local] [-p|--pause]
+USAGE: git-idx-update-verticals [[-h|--help]] | [-l|--local] [-p|--pause] [--v1]
 
 From WORKDIR, enter all IDX_V2_VERTICALS and update the versions
 via the 'git-mvn-versions' command.
@@ -13,6 +13,7 @@ OPTIONS:
    -p | --pause     pause in each repo to allow for acceptance tests
    -l | --local     make only local repo changes; i.e., don't 
                     push the modified branch to the remote repos
+   --v1             include V1 projects
    -h | --help      display this help
 EOF
 }
@@ -28,6 +29,10 @@ do
             ;;
 		-l | --local)
 			MY_OPTIONS="$MY_OPTIONS --local"
+			shift
+			;;
+		--v1)
+			REPOS="$REPOS $IDX_V1_PROJECTS"
 			shift
 			;;
         -h | --help)

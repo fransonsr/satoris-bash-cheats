@@ -32,7 +32,7 @@ do
 			shift
 			;;
 		--v1)
-			REPOS="$REPOS $IDX_V1_PROJECTS"
+			REPOS="$IDX_V1_PROJECTS $REPOS"
 			shift
 			;;
         -h | --help)

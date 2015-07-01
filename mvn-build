@@ -1,0 +1,17 @@
+#!/bin/bash
+
+#
+# From the CURRENTDIR, do a clean Maven build. If the project is an
+# application, it will start the acceptance module and server.
+#
+
+set -e 
+
+mvn -T 1C clean install 
+
+if [[ -d acceptance ]]
+then
+	cd acceptance
+	mvn cargo:run 
+	cd ..
+fi

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Arguments = -r ref
+# Arguments = -r ref -d
 
 #set -e 
 
@@ -10,11 +10,13 @@ usage: $0 options
 Push artifacts contained in a directory to the specified reference.
 OPTIONS:
   -r  reference; either 'beta' or 'prod' (default: prod)
+  -d  include dependent services in vitals check
 EOF
 }
 
 REF=prod
-while getopts "hr:" OPTION
+QUERY=""
+while getopts "hr:d" OPTION
 do
   case $OPTION in
     h)
@@ -24,6 +26,9 @@ do
     r)
       REF=$OPTARG
       ;;
+	d)
+	  QUERY="?includeDependentServices=true"
+	  ;;
     ?)
       usage
       exit 1
@@ -72,19 +77,20 @@ _healthcheck() {
         SERVER=$1
         echo Checking server: $SERVER
         echo ================
-        echo -n idx-api-server: ; curl -f -s $SERVER/indexing-service/api/.well-known/healthcheck/vitals > /dev/null; echo " OK"
-        echo -n adminClient: ; curl -f -s $SERVER/indexing-service/admin-app/index > /dev/null; echo " OK"
-        echo -n gedxBuilder: ; curl -f -s $SERVER/indexing-service/template-app/ > /dev/null; echo " OK"
-		echo -n swing-apps: ; curl -f -s $SERVER/indexing-service/apps/version.jsp > /dev/null ; echo " OK"
-        echo -n idx-discovery: ; _assertVitals $SERVER/indexing-service/discovery/.well-known/healthcheck/vitals
-        echo -n idx-project: ; _assertVitals $SERVER/indexing-service/project/.well-known/healthcheck/vitals
-        echo -n idx-template: ; _assertVitals $SERVER/indexing-service/template/.well-known/healthcheck/vitals
-        echo -n idx-workflow: ; _assertVitals $SERVER/indexing-service/workflow/.well-known/healthcheck/vitals
-        echo -n idx-user: ; _assertVitals $SERVER/indexing-service/user/.well-known/healthcheck/vitals
-        echo -n idx-metric: ; _assertVitals $SERVER/indexing-service/metric/.well-known/healthcheck/vitals
-        echo -n idx-statistic: ; _assertVitals $SERVER/indexing-service/statistic/.well-known/healthcheck/vitals
-        echo -n idx-message: ; _assertVitals $SERVER/indexing-service/message/.well-known/healthcheck/vitals
-        echo -n idx-orchestration: ; _assertVitals $SERVER/indexing-service/orchestration/.well-known/healthcheck/vitals
+        echo -n idx-api-server: ; curl -f -s $SERVER/indexing-service/api/.well-known/healthcheck/vitals$QUERY > /dev/null; echo " OK"
+        echo -n adminClient: ; curl -f -s $SERVER/indexing-service/admin-app/index$QUERY > /dev/null; echo " OK"
+        echo -n gedxBuilder: ; curl -f -s $SERVER/indexing-service/template-app/$QUERY > /dev/null; echo " OK"
+		echo -n swing-apps: ; curl -f -s $SERVER/indexing-service/apps/version.jsp$QUERY > /dev/null ; echo " OK"
+        echo -n idx-discovery: ; _assertVitals $SERVER/indexing-service/discovery/.well-known/healthcheck/vitals$QUERY
+        echo -n idx-project: ; _assertVitals $SERVER/indexing-service/project/.well-known/healthcheck/vitals$QUERY
+        echo -n idx-template: ; _assertVitals $SERVER/indexing-service/template/.well-known/healthcheck/vitals$QUERY
+        echo -n idx-workflow: ; _assertVitals $SERVER/indexing-service/workflow/.well-known/healthcheck/vitals$QUERY
+        echo -n idx-user: ; _assertVitals $SERVER/indexing-service/user/.well-known/healthcheck/vitals$QUERY
+        echo -n idx-metric: ; _assertVitals $SERVER/indexing-service/metric/.well-known/healthcheck/vitals$QUERY
+        echo -n idx-statistic: ; _assertVitals $SERVER/indexing-service/statistic/.well-known/healthcheck/vitals$QUERY
+#        echo -n idx-message: ; _assertVitals $SERVER/indexing-service/message/.well-known/healthcheck/vitals$QUERY
+        echo -n idx-orchestration: ; _assertVitals $SERVER/indexing-service/orchestration/.well-known/healthcheck/vitals$QUERY
+        echo -n cmp-mailbox: ; _assertVitals $SERVER/fst/mailbox/.well-known/healthcheck/vitals$QUERY
         echo Health $HEALTH: server: $SERVER
         echo
 }

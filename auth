@@ -1,0 +1,4 @@
+#!/bin/bash
+
+cd $WORKDIR/idx-api-domain/test-client
+mvn -q exec:java -Dexec.mainClass="org.familysearch.idx.api.test.client.CISAuthentication" -Dexec.args="-realm cis-staging -clipboard -reauthenticate"

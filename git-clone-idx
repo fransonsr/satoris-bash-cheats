@@ -122,7 +122,7 @@ cloneSSH() {
 	for REPO in $*
 	do
 		if [[ ! -d $REPO ]]; then
-			git clone git@github.com/fs-eng/$REPO.git
+			git clone git@github.com:fs-eng/$REPO.git
 		fi
 	done
 }

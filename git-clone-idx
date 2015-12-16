@@ -1,95 +1,156 @@
 #!/bin/bash
 
 #
-# Clone IDX GitHub repositories
+# Clone IDX/IIS GitHub repositories
 #
 
 METHOD=https
+CLONE_V2=true
 CLONE_V1=true
+CLONE_WEB=true
+CLONE_IIS=true
 
 usage() {
-echo <<- EOF
-USAGE: git-clone-idx [[-h|--help]] | [--https|-ssh] [--v2]]
+cat <<- EOF
+USAGE: git-clone-idx [[-h|--help]] | [--https|-ssh] [--all|--none] [--v2|--no-v2] 
+     [--v1|--no-v1] [--web|--no-web] [--iis|--no-iis]]
 
-From WORKDIR, clone the IDX GitHub repositories.
+From WORKDIR, clone the IDX GitHub repositories (if not already existing).
 
 OPTIONS:
-   --https       use 'https' method of cloning repositories (default)
-   --ssh         use 'ssh' method of cloning repositories
-   --v2          clone only IDX V2 repositories
-   -h | --help   display this help
+	--https       use 'https' method of cloning repositories (default)
+	--ssh         use 'ssh' method of cloning repositories
+	--all         clone all repositories (V1, V2, web, IIS; default)
+	--none        clone no repositories (used first to specify specific modules)
+	--v2          clone IDX V2 repositories
+	--no-v2       do not clone IDX V2 repositories
+	--v1          clone IDX V1 repositories
+	--no-v1       do not clone IDX V1 repositories
+	--web         clone IDX web repositories
+	--no-web      do not clone IDX web repositories
+	--iis         clone IIS repository
+	--no-iis      do not clone IIS repository
+	-h | --help   display this help
 EOF
 }
 
 while :
 do
-    case "$1" in
-        --http)
-            METHOD=https
-            shift
-            ;;
+	case "$1" in
+		--http)
+			METHOD=https
+			shift
+			;;
 		--ssh)
 			METHOD=ssh
 			shift
 			;;
+		--all)
+			CLONE_V1=true
+			CLONE_V2=true
+			CLONE_WEB=true
+			CLONE_IIS=true
+			shift
+			;;
+		--none)
+			CLONE_V1=false
+			CLONE_V2=false
+			CLONE_WEB=false
+			CLONE_IIS=false
+			shift
+			;;
 		--v2)
+			CLONE_V2=true
+			shift
+			;;
+		--no-v2)
+			CLONE_V2=false
+			shift
+			;;
+		--v1)
+			CLONE_V1=true
+			shift
+			;;
+		--no-v1)
 			CLONE_V1=false
 			shift
 			;;
-        -h | --help)
-            usage
-            exit 1
-            ;;
-        --)         # end of all options
-            shift
-            break
-            ;;
-        *)          # no more options
-            break
-            ;;
-    esac
+		--web)
+			CLONE_WEB=true
+			shift
+			;;
+		--no-web)
+			CLONE_WEB=false
+			shift
+			;;
+		--iis)
+			CLONE_IIS=true
+			shift
+			;;
+		--no-iis)
+			CLONE_IIS=false
+			shift
+			;;
+		-h | --help)
+			usage
+			exit 1
+			;;
+		--)         # end of all options
+			shift
+			break
+			;;
+		*)          # no more options
+			break
+			;;
+	esac
 done
 
 cd $WORKDIR
 
+REPOS_IIS="iis"
+
+cloneHTTP() {
+	for REPO in $*
+	do
+		if [[ ! -d $REPO ]]; then
+			git clone https://github.com/fs-eng/$REPO.git
+		fi
+	done
+}
+
+cloneSSH() {
+	for REPO in $*
+	do
+		if [[ ! -d $REPO ]]; then
+			git clone git@github.com/fs-eng/$REPO.git
+		fi
+	done
+}
+
 if [[ "$METHOD" == "https" ]]; then
-	git clone https://github.com/fs-eng/idx-api-super-pom.git
-	git clone https://github.com/fs-eng/idx-api-core.git
-	git clone https://github.com/fs-eng/idx-api-domain.git
-	git clone https://github.com/fs-eng/idx-db-migration.git
-	git clone https://github.com/fs-eng/idx-discovery.git
-	git clone https://github.com/fs-eng/idx-message.git
-	git clone https://github.com/fs-eng/idx-metric.git
-	git clone https://github.com/fs-eng/idx-orchestration.git
-	git clone https://github.com/fs-eng/idx-project.git
-	git clone https://github.com/fs-eng/idx-statistic.git
-	git clone https://github.com/fs-eng/idx-template.git
-	git clone https://github.com/fs-eng/idx-user.git
-	git clone https://github.com/fs-eng/idx-workflow.git
+	if $CLONE_V2; then
+		cloneHTTP $IDX_V2_PROJECTS
+	fi
 	if $CLONE_V1; then
-		git clone https://github.com/fs-eng/idx-api-app.git
-		git clone https://github.com/fs-eng/idx-admin-app.git
-		git clone https://github.com/fs-eng/idx-template-app.git
-		git clone https://github.com/fs-eng/idx-swing-apps.git
+		cloneHTTP $IDX_V1_PROJECTS
+	fi
+	if $CLONE_WEB; then
+		cloneHTTP $IDX_WEB
+	fi
+	if $CLONE_IIS; then
+		cloneHTTP $REPOS_IIS
 	fi
 else
-	git clone git@github.com:fs-eng/idx-api-super-pom.git
-	git clone git@github.com:fs-eng/idx-api-core.git
-	git clone git@github.com:fs-eng/idx-api-domain.git
-	git clone git@github.com:fs-eng/idx-db-migration.git
-	git clone git@github.com:fs-eng/idx-discovery.git
-	git clone git@github.com:fs-eng/idx-message.git
-	git clone git@github.com:fs-eng/idx-metric.git
-	git clone git@github.com:fs-eng/idx-orchestration.git
-	git clone git@github.com:fs-eng/idx-project.git
-	git clone git@github.com:fs-eng/idx-statistic.git
-	git clone git@github.com:fs-eng/idx-template.git
-	git clone git@github.com:fs-eng/idx-user.git
-	git clone git@github.com:fs-eng/idx-workflow.git
+	if $CLONE_V2; then
+		cloneSSH $IDX_V2_PROJECTS
+	fi
 	if $CLONE_V1; then
-		git clone git@github.com:fs-eng/idx-api-app.git
-		git clone git@github.com:fs-eng/idx-admin-app.git
-		git clone git@github.com:fs-eng/idx-template-app.git
-		git clone git@github.com:fs-eng/idx-swing-apps.git
+		cloneSSH $IDX_V1_PROJECTS
+	fi
+	if $CLONE_WEB; then
+		cloneSSH $IDX_WEB
+	fi
+	if $CLONE_IIS; then
+		cloneSSH $REPOS_IIS
 	fi
 fi

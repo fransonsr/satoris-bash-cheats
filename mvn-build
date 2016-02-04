@@ -49,6 +49,6 @@ mvn $OPTIONS clean install
 if [[ -d acceptance ]]
 then
 	cd acceptance
-	mvn $OPTIONS cargo:run 
+	mvn $OPTIONS cargo:run
 	cd ..
 fi

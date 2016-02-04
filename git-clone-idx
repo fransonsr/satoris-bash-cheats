@@ -113,18 +113,36 @@ cloneHTTP() {
 	for REPO in $*
 	do
 		if [[ ! -d $REPO ]]; then
-			git clone https://github.com/fs-eng/$REPO.git
+			git clone `httpURI $REPO`
 		fi
 	done
+}
+
+httpURI() {
+	URI=https://github.com/fs-eng/$1.git
+	if [[ $IDX_WEB_FS_WEBDEV == *"$1"* ]]
+	then
+		URI=https://github.com/fs-webdev/$1.git
+	fi
+	echo $URI
 }
 
 cloneSSH() {
 	for REPO in $*
 	do
 		if [[ ! -d $REPO ]]; then
-			git clone git@github.com:fs-eng/$REPO.git
+			git clone `gitURI $REPO`
 		fi
 	done
+}
+
+gitURI() {
+	URI=git@github.com:fs-eng/$1.git
+	if [[ $IDX_WEB_FS_WEBDEV == *"$1"* ]]
+	then
+		URI=git@github.com:fs-webdev/$1.git
+	fi
+	echo $URI
 }
 
 if [[ "$METHOD" == "https" ]]; then

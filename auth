@@ -1,4 +1,49 @@
 #!/bin/bash
 
+REF=beta
+REALM=cis-staging
+
+usage() {
+cat <<- EOF
+USAGE: auth [[-h|--help]] | [[-r | --ref] <reference>]
+
+Prompt the user for username/password to obtain a CIS session.
+
+OPTIONS:
+   -r | --ref    CIS reference system ('beta' or 'prod')
+   -h | -- help     display this help
+EOF
+}
+
+while :
+do
+    case "$1" in
+		-r | --realm)
+			REF=$2
+			shift 2
+			;;
+        -h | --help)
+            usage
+            exit 1
+            ;;
+        --)         # end of all options
+            shift
+            break
+            ;;
+        *)          # no more options
+            break
+            ;;
+    esac
+done
+
+if [[ "beta" == "$REF" ]]
+then
+	REALM=cis-staging
+elif [[ "prod" == "$REF" ]]
+then
+	REALM=cis-production
+fi
+
+
 cd $WORKDIR/idx-api-domain/test-client
-mvn -q exec:java -Dexec.mainClass="org.familysearch.idx.api.test.client.CISAuthentication" -Dexec.args="-realm cis-staging -clipboard -reauthenticate"
+mvn -q exec:java -Dexec.mainClass="org.familysearch.idx.api.test.client.CISAuthentication" -Dexec.args="-realm $REALM -clipboard -reauthenticate"

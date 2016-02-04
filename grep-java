@@ -1,0 +1,3 @@
+#!/bin/bash 
+
+find . -name '*.java' | grep -v target | xargs grep "$@"

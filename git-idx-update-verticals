@@ -4,7 +4,7 @@ set -e
 
 usage() {
 	cat <<- EOF
-USAGE: git-idx-update-verticals [[-h|--help]] | [-l|--local] [-p|--pause] [--v1]
+USAGE: git-idx-update-verticals [[-h|--help]] | [-l|--local] [-p|--pause] [--v1] | [[-f|--from] <project>]
 
 From WORKDIR, enter all IDX_V2_VERTICALS and update the versions
 via the 'git-mvn-versions' command.
@@ -14,6 +14,8 @@ OPTIONS:
    -l | --local     make only local repo changes; i.e., don't 
                     push the modified branch to the remote repos
    --v1             include V1 projects
+   -f | --from <project>  continue the update from the specified project,
+                          skipping previous projects   
    -h | --help      display this help
 EOF
 }
@@ -35,6 +37,10 @@ do
 			REPOS="$IDX_V1_PROJECTS $REPOS"
 			shift
 			;;
+		-f | --from)
+			FROM="$2"
+			shift 2
+			;;			
         -h | --help)
             usage
             exit 1
@@ -49,15 +55,33 @@ do
     esac
 done
 
+do_mvn_update() 
+{
+	SKIP=N
+	if [ ! -z "$FROM" ]
+	then
+		SKIP=Y
+	fi
+
+	for PROJECT
+	do
+		echo ========================
+		echo PROJECT - $PROJECT
+		
+		if [ $SKIP == "Y" -a $PROJECT != "$FROM" ]
+		then
+			echo Skipping $PROJECT	
+		else
+			SKIP=N
+			cd $PROJECT
+			git-mvn-versions $MY_OPTIONS
+			cd ..
+		fi
+	done
+}
+
 pushd $WORKDIR
 
-for REPO in $REPOS
-do
-	echo ========================
-	echo PROJECT - $REPO
-	cd $REPO
-	git-mvn-versions $MY_OPTIONS
-	cd ..
-done
+time do_mvn_update $REPOS
 
 popd

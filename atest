@@ -36,7 +36,11 @@ if [[ -z $SERVICE ]]; then
 	curl http://localhost:8080/report
 else
 	curl -X POST http://localhost:8080/test?url=http://localhost:8080/$SERVICE\&config=testng-$REF.xml
-	echo "Test started; waiting 5 seconds for report..."
-	sleep 5
+	echo "Test started; waiting for report..."
+	until [ "FINISHED" == `curl -s http://localhost:8080/test` ]
+	do
+		echo -n .
+		sleep 1
+	done
 	atest
 fi

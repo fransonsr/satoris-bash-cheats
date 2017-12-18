@@ -50,7 +50,7 @@ case "$REF" in
     ;;
 esac
 
-REFERENCE="https://familysearch.org/indexing-service"
+REFERENCE="https://www.familysearch.org/indexing-service"
 if [[ "$REF" == "beta" ]]; then
 	REFERENCE="https://beta.familysearch.org/indexing-service"
 elif [[ "$REF" == "test" ]]; then

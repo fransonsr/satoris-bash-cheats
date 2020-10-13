@@ -7,7 +7,7 @@
 # IDX repositories. Use this in .bashrc to set the environment.
 #
 
-export WORKDIR=/cygdrive/c/work/github
+export WORKDIR=/cygdrive/c/dev/github
 
 export IDX_SUPER_POM="idx-api-super-pom"
 export IDX_API_CORE="idx-api-core"
@@ -17,7 +17,4 @@ export IDX_V1_PROJECTS="idx-api-app idx-admin-app idx-template-app idx-swing-app
 export IDX_V2_VERTICALS="idx-discovery idx-metric idx-orchestration idx-project idx-statistic idx-template idx-user idx-workflow cmp-mailbox"
 export IDX_V2_PROJECTS="idx-db-migration $IDX_V2_LIBS $IDX_V2_VERTICALS"
 export IDX_PROJECTS="$IDX_V2_PROJECTS $IDX_V1_PROJECTS"
-export IDX_WEB_FS_WEBDEV="indexing idx-isomorphic-hypermedia-client idx-shared-components idx-new-admin-app"
-export IDX_WEB_FS_ENG="idx-marketing"
-export IDX_WEB="$IDX_WEB_FS_WEBDEV $IDX_WEB_FS_ENG"
-export IDX_ALL="$IDX_PROJECTS $IDX_WEB"
+export IDX_ALL="$IDX_PROJECTS"

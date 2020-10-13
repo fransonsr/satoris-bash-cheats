@@ -31,7 +31,7 @@ done
 
 
 git checkout -b spike
-xmlstarlet ed -L -P -u //_:parent/_:version -v 1.1-SNAPSHOT pom.xml
-xmlstarlet ed -L -P -u //_:idx-api-core.version -v 2.1-SNAPSHOT pom.xml
-xmlstarlet ed -L -P -u //_:idx-api-domain.version -v 2.1-SNAPSHOT pom.xml
+xmlstarlet ed -L -P -u //_:parent/_:version -v 1.2-SNAPSHOT pom.xml
+xmlstarlet ed -L -P -u //_:idx-api-core.version -v 2.2-SNAPSHOT pom.xml
+xmlstarlet ed -L -P -u //_:idx-api-domain.version -v 2.2-SNAPSHOT pom.xml
 xmlstarlet ed -L -P -u //_:idx-db-migration.version -v 1.0-SNAPSHOT pom.xml

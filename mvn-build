@@ -7,6 +7,12 @@
 
 set -e 
 
+trap ctrl_c INT
+
+function ctrl_c() {
+	tomcat-kill
+}
+
 usage() {
 cat <<- EOF
 USAGE: mvn-build [-o | --offline]
@@ -20,7 +26,7 @@ OPTIONS:
 EOF
 }
 
-OPTIONS="-T 1C"
+OPTIONS=""
 
 while :
 do
@@ -49,6 +55,7 @@ mvn $OPTIONS clean install
 if [[ -d acceptance ]]
 then
 	cd acceptance
+	tomcat-kill
 	mvn $OPTIONS cargo:run
 	cd ..
 fi

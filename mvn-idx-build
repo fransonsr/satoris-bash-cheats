@@ -52,7 +52,7 @@ do_mvn_build()
 		else
 			SKIP=N
 			cd $PROJECT
-			mvn -T 1C clean install
+			mvn clean install
 			cd ..
 		fi
 	done

@@ -43,7 +43,7 @@ PR=$1
 git fetch origin
 git checkout pr/$PR
 git pull # if local branch is out-of-date
-mvn -T 1C clean install 
+mvn clean install 
 if [ -d acceptance ]; then
 	cd acceptance
 	tomcat-kill

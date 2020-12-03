@@ -8,7 +8,7 @@
 #
 
 # If WORKDIR is already set, use that value; otherwise you get this default
-export WORKDIR=${workdir:-/cygdrive/c/dev/github}
+export WORKDIR=${WORKDIR:-/cygdrive/c/dev/github}
 
 export IDX_V1_PROJECTS="idx-api-app idx-admin-app idx-template-app idx-swing-apps"
 export IDX_V2_LIBS="idx-api-super-pom idx-api-core idx-api-domain"

@@ -20,7 +20,7 @@ export IDX_ALL="$IDX_PROJECTS"
 
 # Variables used for command completion
 export IDX_COMMAND_LAZY="api admin template-app swing super core domain db-migration discovery metric orchestration project statistic template user workflow mailbox"
-export IDX_COMMANDS="$IDX_ALL status update $IDX_COMMAND_LAZY"
+export IDX_COMMANDS="$IDX_ALL status update reset-master $IDX_COMMAND_LAZY"
 export IDX_OPTIONS="-h --help"
 export IDX_UPDATE_OPTIONS="-c --clean-merged"
 
@@ -52,6 +52,7 @@ COMMANDS:
 
   status                check the git status of the repository
   update                update the repository
+  reset-master          force a reset of the local master branch to the remote branch
 
 OPTIONS:
   -h | --help           Display this help. If a command follows, command-
@@ -171,6 +172,38 @@ EOF
       git branch -d "$b"
     done
   fi
+}
+
+idx-reset-master() {
+    case "$1" in
+    -h | --help)
+      rootUsage
+      cat <<-EOF
+  ===========================================================================
+  USAGE: idx reset-master
+
+  Force a deletion of the local master branch and recreate it from the remote
+  master branch. Useful if the local master is accidentally modified.
+EOF
+      IDX_ERROR="idx-reset-master - command help"
+      return
+      ;;
+    *)
+      ;;
+  esac
+
+  local modified_count="$(git status --porcelain=2 | wc -l)"
+  if [[ "$modified_count" -gt 0 ]]; then
+    echo ERROR: Local branch has uncommitted changes! Commit or stash the changes and re-run.
+    IDX_ERROR="idx-reset-master"
+    return
+  fi
+
+  git fetch origin
+  git branch --move --force master killme
+  git branch --track master origin/master
+  git checkout master
+  git branch --delete --force killme
 }
 
 idx-all() {
@@ -320,6 +353,11 @@ idx() {
     update)
       shift
       idx-update ${HELPARGS:+"$HELPARGS"} "$@"
+      break;
+      ;;
+    reset-master)
+      shift
+      idx-reset-master ${HELPARGS:+"$HELPARGS"} "$@"
       break;
       ;;
     --) # end of all options

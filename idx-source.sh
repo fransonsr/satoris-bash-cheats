@@ -12,17 +12,18 @@ export IDX_SOURCE_VERSION=0.1.1
 # If WORKDIR is already set, use that value; otherwise you get this default
 export WORKDIR=${WORKDIR:-/cygdrive/c/dev/github}
 
+# Maintain order!
 export IDX_V1_PROJECTS="idx-api-app idx-admin-app idx-template-app idx-swing-apps"
 export IDX_V2_LIBS="idx-api-super-pom idx-api-core idx-api-domain"
 export IDX_V2_FLYWAY="idx-db-migration cmp-db-migration"
 export IDX_V2_VERTICALS="idx-discovery idx-metric idx-orchestration idx-project idx-statistic idx-template idx-user idx-workflow cmp-mailbox"
-export IDX_V2_PROJECTS="$IDX_V2_FLYWAY $IDX_V2_LIBS $IDX_V2_VERTICALS"
+export IDX_V2_PROJECTS="$IDX_V2_LIBS $IDX_V2_FLYWAY $IDX_V2_VERTICALS"
 export IDX_PROJECTS="$IDX_V2_PROJECTS $IDX_V1_PROJECTS"
 export IDX_ALL="$IDX_PROJECTS"
 
 # Variables used for command completion
 export IDX_COMMAND_LAZY="api admin template-app swing super core domain db-migration discovery metric orchestration project statistic template user workflow mailbox"
-export IDX_COMMANDS="$IDX_ALL status update reset-master branch $IDX_COMMAND_LAZY"
+export IDX_COMMANDS="$IDX_ALL status update reset-master branch build $IDX_COMMAND_LAZY"
 export IDX_OPTIONS="-h --help"
 
 rootUsage() {
@@ -30,9 +31,9 @@ rootUsage() {
 USAGE: idx [all] [[-h|--help]] <command>
 
 COMMANDS:
-  all                 recursively execute the command in each of the projects
+  all                 Recursively execute the command in each of the projects.
 
-  idx-api-super-pom   change the CWD to the project (lazy: 'super')
+  idx-api-super-pom   Change the CWD to the project (lazy: 'super').
   idx-api-core          "   (lazy: 'core')
   idx-api-domain        "   (lazy: 'domain')
   idx-discovery         "   (lazy: 'discovery')
@@ -51,10 +52,11 @@ COMMANDS:
   idx-db-migration      "   (lazy: 'migration')
   cmp-db-migration      "   (lazy: <none>)
 
-  status                check the git status of the repository
-  update                update the repository
-  branch                report on the repository's branches
-  reset-master          force a reset of the local master branch to the remote branch
+  status                Check the git status of the repository.
+  update                Update the repository.
+  branch                Report on the repository's branches.
+  reset-master          Force a reset of the local master branch to the remote branch.
+  build                 Build the repository.
 
 OPTIONS:
   -h | --help           Display this help. If a command follows, command-
@@ -67,7 +69,7 @@ DEPENDENCIES:
   xmlstarlet            XML processing tool
   mvn                   Maven build tool
   docker                Container management
-  pcre                  Pearl-compatible expression language utilities
+  pcre                  Pearl-compatible regex expression language utilities
 
 ERRORS:
   If an error occurs the script will exit with '1' and IDX_ERROR will contain
@@ -322,6 +324,71 @@ idx-branch() {
   fi
 }
 
+_idx-build() {
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  COMPREPLY=($(compgen -W "-k --keep-existing -l --local-m2-repository" -- "$cur"))
+}
+
+idx-build-usage() {
+  cat <<-EOF
+USAGE: idx build [[-k | --keep-existing] [-r | --local-m2-repository]]
+
+Build the local repository. (By default, this will clean the build directory
+then perform a 'mvn install' command.
+
+OPTIONS:
+  -k | --keep-existing        Keep the existing build files (no Maven 'clean' goal is used).
+  -l | --local-m2-repository  Use a local M2 repository ('target/m2-repo').
+EOF
+}
+
+idx-build() {
+  local mvn_clean=true
+  local local_m2_repository=false
+
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      -h | --help)
+        idx-build-usage
+        IDX_ERROR="idx-build - command help"
+        return
+        ;;
+      -k | --keep-existing)
+        mvn_clean=false
+        break
+        ;;
+      -l | --local-m2-repository)
+        local_m2_repository=true
+        break
+        ;;
+      *)
+        echo Option \'"$1"\' not recognized.
+        idx-branch-usage
+        IDX_ERROR="idx-build - options"
+        return
+        ;;
+    esac
+  done
+
+  if [[ $mvn_clean ]]; then
+    mvn clean
+  fi
+
+  if [[ $? -eq 0 ]]; then
+    local options="install"
+    if [[ $local_m2_repository == true ]]; then
+      options="-Dmaven.repo.local=target/m2-repo $options"
+    fi
+    mvn $options
+
+    if [[ $? > 0 ]]; then
+      IDX_ERROR="idx-build"
+    fi
+  else
+    IDX_ERROR="idx-build clean"
+  fi
+}
+
 _idx-all() {
   local i=1 subcommand_index
 
@@ -348,6 +415,10 @@ _idx-all() {
         subcommand_index=$i
         break
         ;;
+      build)
+        subcommand_index=$i
+        break
+        ;;
     esac
     (( i++ ))
   done
@@ -371,6 +442,10 @@ _idx-all() {
         _idx-branch
         return
         ;;
+      build)
+        _idx-build
+        return
+        ;;
       reset-master)
         COMPREPLY=()
         return
@@ -380,7 +455,7 @@ _idx-all() {
   done
 
   local cur="${COMP_WORDS[COMP_CWORD]}"
-  COMPREPLY=($(compgen -W "-h --help status update branch reset-master" -- "$cur"))
+  COMPREPLY=($(compgen -W "-h --help status update branch reset-master build" -- "$cur"))
 }
 
 idx-all() {
@@ -553,6 +628,11 @@ idx() {
       idx-branch ${helpargs:+"$helpargs"} "$@"
       break
       ;;
+    build)
+      shift
+      idx-build ${helpargs:+"$helpargs"} "$@"
+      break
+      ;;
     --) # end of all options
       shift
       ;;
@@ -611,6 +691,10 @@ _idx() {
       ;;
     branch)
       _idx-branch
+      return 0
+      ;;
+    build)
+      _idx-build
       return 0
       ;;
     *)

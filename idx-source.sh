@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export IDX_SOURCE_VERSION=0.1.1
+export IDX_SOURCE_VERSION=0.1.2
 
 #
 # Sets environment variables for other scripts. Principally,
@@ -10,7 +10,7 @@ export IDX_SOURCE_VERSION=0.1.1
 #
 
 # If WORKDIR is already set, use that value; otherwise you get this default
-export WORKDIR=${WORKDIR:-/cygdrive/c/dev/github}
+export WORKDIR="${WORKDIR:-$HOME/github}"
 
 # Maintain order!
 export IDX_V1_PROJECTS="idx-api-app idx-admin-app idx-template-app idx-swing-apps"
@@ -23,8 +23,17 @@ export IDX_ALL="$IDX_PROJECTS"
 
 # Variables used for command completion
 export IDX_COMMAND_LAZY="api admin template-app swing super core domain db-migration discovery metric orchestration project statistic template user workflow mailbox"
-export IDX_COMMANDS="$IDX_ALL status update reset-master branch build $IDX_COMMAND_LAZY"
+export IDX_COMMANDS="$IDX_ALL status update reset-master branch build clone $IDX_COMMAND_LAZY"
 export IDX_OPTIONS="-h --help"
+
+export GITHUB_BASE="https://github.com"
+export GITHUB_FS_BASE="$GITHUB_BASE/fs-eng"
+
+COLOR_LT_BLUE='\e[1;34m'
+COLOR_LT_GREEN='\e[1;32m'
+COLOR_LT_RED='\e[1;31m'
+COLOR_RED='\e[0;31m'
+COLOR_NONE='\e[0m'
 
 rootUsage() {
   cat <<-EOF
@@ -37,7 +46,7 @@ COMMANDS:
   idx-api-core          "   (lazy: 'core')
   idx-api-domain        "   (lazy: 'domain')
   idx-discovery         "   (lazy: 'discovery')
-  idx-metric            "   (lazy: 'metric)
+  idx-metric            "   (lazy: 'metric')
   idx-orchestration     "   (lazy: 'orchestration')
   idx-project           "   (lazy: 'project')
   idx-statistic         "   (lazy: 'statistic')
@@ -57,6 +66,7 @@ COMMANDS:
   branch                Report on the repository's branches.
   reset-master          Force a reset of the local master branch to the remote branch.
   build                 Build the repository.
+  clone 		Clone github repositories.
 
 OPTIONS:
   -h | --help           Display this help. If a command follows, command-
@@ -134,13 +144,13 @@ idx-status() {
 
   local result=$(git status)
   local prefix
-  local postfix=
+  local postfix
   if [[ $result != *"master"* ]]; then
-    prefix='\e[1;33m'
-    postfix='\e[0m'
+    prefix=${COLOR_LT_GREEN}
+    postfix=${COLOR_NONE}
   elif [[ $result != *"up-to-date"* ]]; then
-    prefix='\e[1;34m'
-    postfix='\e[0m'
+    prefix=${COLOR_LT_BLUE}
+    postfix=${COLOR_NONE}
   fi
   echo -e "$prefix$result$postfix"
 }
@@ -172,17 +182,17 @@ idx-update() {
         idx-update-usage
         IDX_ERROR="idx-update - command help"
         return
-      ;;
-    -c | --clean-merged)
-      idx_status_clean_merged=true
-      shift
-      ;;
-    *)
-      echo Option \'"$1"\' not recognized.
-      idx-update-usage
-      IDX_ERROR="idx-reset-master - options"
-      return
-      ;;
+        ;;
+      -c | --clean-merged)
+        idx_status_clean_merged=true
+        shift
+        ;;
+      *)
+        echo Option \'"$1"\' not recognized.
+        idx-update-usage
+        IDX_ERROR="idx-reset-master - options"
+        return
+        ;;
     esac
   done
 
@@ -307,14 +317,14 @@ idx-branch() {
     local prefix
     local postfix
     local current_branch
-    
+
     current_branch="$(git branch | grep "\*" | cut -d" " -f2)"
     if [[ "$current_branch" == "master" ]]; then
-      prefix='\e[1;32m'
-      postfix='\e[0m'
+      prefix=${COLOR_LT_GREEN}
+      postfix=${COLOR_NONE}
     else
-      prefix='\e[1;31m'
-      postfix='\e[0m'
+      prefix=${COLOR_LT_RED}
+      postfix=${COLOR_NONE}
     fi
     echo -e $prefix$current_branch$postfix
   elif $filterpr; then
@@ -322,6 +332,76 @@ idx-branch() {
   else
     git -P branch "${options[@]}"
   fi
+}
+
+_idx-clone() {
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  COMPREPLY=($(compgen -W "-a --all -d --delete" -- "$cur"))
+}
+
+idx-clone-usage() {
+  cat <<-EOF
+USAGE idx clone [[-a | --all]] <repo name(s)>
+
+Clone the github repositories specified by the space-delimited list of repository names. 
+The new local respoistory will be cloned into the 'WORKDIR' directory.
+
+OPTIONS:
+  -a | --all	Clone all IDX repositories.
+  -d | --delete	Delete the existing repository before cloning.
+EOF
+}
+
+idx-clone-repo() {
+  local repo="$1"
+  local url="$GITHUB_FS_BASE/$repo.git"
+  echo -e Cloning fs-eng repository ${COLOR_RED}$url${COLOR_NONE}
+  git clone "$url"
+}
+
+idx-clone() {
+  local delete_repo=false
+  local repositories
+
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      -h | --help)
+        idx-clone-usage
+        IDX_ERROR="idx-clone - command help"
+        return
+        ;;
+      -a | --all)
+        shift
+        repositories="$IDX_ALL"
+        ;;
+      -d | --delete)
+        shift
+        delete_repo=true
+        ;;
+      *)
+        repositories="$repositories $1"
+        shift
+        ;;
+    esac
+  done
+
+  pushd $WORKDIR >/dev/null
+
+  for repo in $repositories; do
+    if [[ -d $repo ]]; then
+      if $delete_repo; then
+        echo -e Deleting ${COLOR_RED}$repo${COLOR_NONE}...
+        rm -rf $repo
+        idx-clone-repo $repo
+      else
+        echo -e Skipping exisiting repository ${COLOR_RED}$repo${COLOR_NONE}
+      fi
+    else
+      idx-clone-repo $repo
+    fi
+  done
+
+  popd >/dev/null
 }
 
 _idx-build() {
@@ -354,12 +434,12 @@ idx-build() {
         return
         ;;
       -k | --keep-existing)
+        shift
         mvn_clean=false
-        break
         ;;
       -l | --local-m2-repository)
+        shift
         local_m2_repository=true
-        break
         ;;
       *)
         echo Option \'"$1"\' not recognized.
@@ -448,6 +528,10 @@ _idx-all() {
         ;;
       reset-master)
         COMPREPLY=()
+        return
+        ;;
+      clone)
+        _idx-clone
         return
         ;;
     esac
@@ -633,6 +717,11 @@ idx() {
       idx-build ${helpargs:+"$helpargs"} "$@"
       break
       ;;
+    clone)
+      shift
+      idx-clone ${helpargs:+"$helpargs"} "$@"
+      break
+      ;;
     --) # end of all options
       shift
       ;;
@@ -695,6 +784,10 @@ _idx() {
       ;;
     build)
       _idx-build
+      return 0
+      ;;
+    clone)
+      _idx-clone
       return 0
       ;;
     *)

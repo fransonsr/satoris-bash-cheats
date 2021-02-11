@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export IDX_SOURCE_VERSION=0.1.2
+export IDX_SOURCE_VERSION=0.1.3
 
 #
 # Sets environment variables for other scripts. Principally,
@@ -598,90 +598,56 @@ idx() {
       idx-all "$@"
       break
       ;;
-    super)
-      project=${project:=idx-api-super-pom}
+    idx-api-super-pom | super)
+      project=${project:-idx-api-super-pom}
       ;&
-    idx-api-super-pom)
+    idx-api-core | core)
+      project=${project:-idx-api-core}
       ;&
-    core)
-      project=${project:=idx-api-core}
+    idx-api-domain | domain)
+      project=${project:-idx-api-domain}
       ;&
-    idx-api-core)
+    idx-discovery | discovery)
+      project=${project:-idx-discovery}
       ;&
-    domain)
-      project=${project:=idx-api-domain}
+    idx-metric | metric)
+      project=${project:-idx-metric}
       ;&
-    idx-api-domain)
+    idx-orchestration | orchestration)
+      project=${project:-idx-orchestration}
       ;&
-    discovery)
-      project=${project:=idx-discovery}
+    idx-project | project)
+      project=${project:-idx-project}
       ;&
-    idx-discovery)
+    idx-statistic | statistic)
+      project=${project:-idx-statistic}
       ;&
-    metric)
-      project=${project:=idx-metric}
+    idx-template | template)
+      project=${project:-idx-template}
       ;&
-    idx-metric)
+    idx-user | user)
+      project=${project:-idx-user}
       ;&
-    orchestration)
-      project=${project:=idx-orchestration}
+    idx-workflow | workflow)
+      project=${project:-idx-workflow}
       ;&
-    idx-orchestration)
+    idx-api-app | api)
+      project=${project:-idx-api-app}
       ;&
-    project)
-      project=${project:=idx-project}
+    idx-admin-app | admin)
+      project=${project:-idx-admin-app}
       ;&
-    idx-project)
+    idx-template-app | template-app)
+      project=${project:-idx-template-app}
       ;&
-    statistic)
-      project=${project:=idx-statistic}
+    idx-swing-apps | swing)
+      project=${project:-idx-swing-apps}
       ;&
-    idx-statistic)
+    cmp-mailbox | mailbox)
+      project=${project:-cmp-mailbox}
       ;&
-    template)
-      project=${project:=idx-template}
-      ;&
-    idx-template)
-      ;&
-    user)
-      project=${project:=idx-user}
-      ;&
-    idx-user)
-      ;&
-    workflow)
-      project=${project:=idx-workflow}
-      ;&
-    idx-workflow)
-      ;&
-    api)
-      project=${project:=idx-api-app}
-      ;&
-    idx-api-app)
-      ;&
-    admin)
-      project=${project:=idx-admin-app}
-      ;&
-    idx-admin-app)
-      ;&
-    template-app)
-      project=${project:=idx-template-app}
-      ;&
-    idx-template-app)
-      ;&
-    swing)
-      project=${project:=idx-swing-apps}
-      ;&
-    idx-swing-apps)
-      ;&
-    mailbox)
-      project=${project:=cmp-mailbox}
-      ;&
-    cmp-mailbox)
-      ;&
-    migration)
-      project=${project:=idx-db-migration}
-      ;&
-    idx-db-migration)
+    idx-db-migration | migration)
+      project=${project:-idx-db-migration}
       ;&
     cmp-db-migration)
       project=${project:cmp-db-migration}

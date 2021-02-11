@@ -80,6 +80,7 @@ DEPENDENCIES:
   mvn                   Maven build tool
   docker                Container management
   pcre                  Pearl-compatible regex expression language utilities
+  bash-completion       Bash command completion utility
 
 ERRORS:
   If an error occurs the script will exit with '1' and IDX_ERROR will contain

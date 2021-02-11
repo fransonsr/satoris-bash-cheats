@@ -43,10 +43,10 @@ bash-completion | Bash command completion utilities
 
 The "WORKDIR" environment variable tells the 'idx' functions the directory where the indexing GitHub repositories are located. 
 By default, if the environment variable is not already specified, the script will define it as `$HOME/github`. If your directory 
-differs, as the following to your `~/.bashrc` file:
+differs, add the following to your `~/.bashrc` file:
 
 ```
-export WORKDIR="<your directory for projects"
+export WORKDIR="<your directory for projects>"
 ```
 
 ### Setting up the script

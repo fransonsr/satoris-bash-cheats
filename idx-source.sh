@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export IDX_SOURCE_VERSION=0.1.3
+export IDX_SOURCE_VERSION=0.1.4
 
 #
 # Sets environment variables for other scripts. Principally,
@@ -23,7 +23,7 @@ export IDX_ALL="$IDX_PROJECTS"
 
 # Variables used for command completion
 export IDX_COMMAND_LAZY="api admin template-app swing super core domain db-migration discovery metric orchestration project statistic template user workflow mailbox"
-export IDX_COMMANDS="$IDX_ALL status update reset-master branch build clone $IDX_COMMAND_LAZY"
+export IDX_COMMANDS="$IDX_ALL status update reset-master branch build clone atest versions $IDX_COMMAND_LAZY"
 export IDX_OPTIONS="-h --help"
 
 export GITHUB_BASE="https://github.com"
@@ -66,7 +66,10 @@ COMMANDS:
   branch                Report on the repository's branches.
   reset-master          Force a reset of the local master branch to the remote branch.
   build                 Build the repository.
-  clone 		Clone github repositories.
+  clone                 Clone github repositories.
+  atest                 Initiate execution of acceptance tests (from the current project directory;
+                        assumes the acceptance test module is running).
+  versions              Update the version properties in the Maven pom.xml file.
 
 OPTIONS:
   -h | --help           Display this help. If a command follows, command-
@@ -175,7 +178,7 @@ _idx-update() {
 }
 
 idx-update() {
-  local idx_status_clean_merged
+  local idx_status_clean_merged=false
 
   while [ $# -gt 0 ]; do
     case "$1" in
@@ -200,7 +203,7 @@ idx-update() {
   git checkout master
   git pull
 
-  if [ -n "$idx_status_clean_merged" ]; then
+  if $idx_status_clean_merged ; then
     local merged
     merged="$(git branch --merged | grep -v master)"
     for b in $merged; do
@@ -386,7 +389,7 @@ idx-clone() {
     esac
   done
 
-  pushd $WORKDIR >/dev/null
+  pushd $WORKDIR >/dev/null || exit
 
   for repo in $repositories; do
     if [[ -d $repo ]]; then
@@ -402,12 +405,83 @@ idx-clone() {
     fi
   done
 
-  popd >/dev/null
+  popd >/dev/null || exit
+}
+
+idx-versions-usage() {
+  cat <<-EOF
+USAGE: idx versions
+
+Update the Maven properties for the IDX dependencies (parent pom and core dependencies).
+See the Maven pom.xml configuration for the versions plugin.
+
+EOF
+}
+
+idx-versions() {
+  ## TODO options to create a branch if not on 'master', to test?, commit, push and create a PR.
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      -h | --help)
+        idx-versions-usage
+        IDX_ERROR="idx-versions - command help"
+        return
+        ;;
+      *)
+        echo Option \'"$1"\' not recognized.
+        idx-versions-usage
+        IDX_ERROR="idx-versions - options"
+        return
+        ;;
+    esac
+  done
+
+  mvn -U versions:update-parent versions:update-properties versions:commit
+}
+
+idx-atest-usage() {
+  cat <<-EOF
+USAGE: idx atest
+
+Initiate the acceptance test module to run the acceptance tests.
+Assumes that the acceptance test module is loaded. (See `idx build -a`.)
+
+EOF
+}
+
+idx-atest() {
+  ## TODO add options to start the acceptance test module; validate the name
+  local name="${PWD##*/}"
+
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      -h | --help)
+        idx-atest-usage
+        IDX_ERROR="idx-atest - command help"
+        return
+        ;;
+      *)
+        echo Option \'"$1"\' not recognized.
+        idx-atest-usage
+        IDX_ERROR="idx-atest - options"
+        return
+        ;;
+    esac
+  done
+
+  curl -X POST http://localhost:8080/test?url=http://localhost:8080/"${name}"\&config=testng-local.xml
+  echo "Test started; waiting for report..."
+  while [ "RUNNING" == `curl -s http://localhost:8080/test` ]
+  do
+          echo -n .
+          sleep 1
+  done
+  curl http://localhost:8080/report
 }
 
 _idx-build() {
   local cur="${COMP_WORDS[COMP_CWORD]}"
-  COMPREPLY=($(compgen -W "-k --keep-existing -l --local-m2-repository" -- "$cur"))
+  COMPREPLY=($(compgen -W "-k --keep-existing -l --local-m2-repository -a --acceptance-test -s --server" -- "$cur"))
 }
 
 idx-build-usage() {
@@ -420,12 +494,16 @@ then perform a 'mvn install' command.
 OPTIONS:
   -k | --keep-existing        Keep the existing build files (no Maven 'clean' goal is used).
   -l | --local-m2-repository  Use a local M2 repository ('target/m2-repo').
+  -a | --acceptance-test      Start the server and acceptance test module.
+  -s | --server               Start the server (but not the acceptance test module).
 EOF
 }
 
 idx-build() {
   local mvn_clean=true
   local local_m2_repository=false
+  local acceptance=false
+  local server=false
 
   while [ $# -gt 0 ]; do
     case "$1" in
@@ -442,16 +520,24 @@ idx-build() {
         shift
         local_m2_repository=true
         ;;
+      -a | --acceptance-test)
+        shift
+        acceptance=true
+        ;;
+      -s | --server)
+        server=true
+        shift
+        ;;
       *)
         echo Option \'"$1"\' not recognized.
-        idx-branch-usage
+        idx-build-usage
         IDX_ERROR="idx-build - options"
         return
         ;;
     esac
   done
 
-  if [[ $mvn_clean ]]; then
+  if $mvn_clean; then
     mvn clean
   fi
 
@@ -467,6 +553,18 @@ idx-build() {
     fi
   else
     IDX_ERROR="idx-build clean"
+  fi
+
+  if [[ $acceptance = true && -d acceptance ]]; then
+    pushd acceptance >/dev/null || exit
+    mvn cargo:run
+    popd >/dev/null || exit
+  fi
+
+  if [[ $server = true && -d server ]]; then
+    pushd server >/dev/null || exit
+    mvn cargo:run
+    popd >/dev/null || exit
   fi
 }
 
@@ -687,6 +785,16 @@ idx() {
     clone)
       shift
       idx-clone ${helpargs:+"$helpargs"} "$@"
+      break
+      ;;
+    atest)
+      shift
+      idx-atest ${helpargs:+"$helpargs"} "$@"
+      break
+      ;;
+    versions)
+      shift
+      idx-versions ${helpargs:+"$helpargs"} "$@"
       break
       ;;
     --) # end of all options

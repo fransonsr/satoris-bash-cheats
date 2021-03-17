@@ -22,7 +22,7 @@ export IDX_PROJECTS="$IDX_V2_PROJECTS $IDX_V1_PROJECTS"
 export IDX_ALL="$IDX_PROJECTS"
 
 # Variables used for command completion
-export IDX_COMMAND_LAZY="api admin template-app swing super core domain db-migration discovery metric orchestration project statistic template user workflow mailbox"
+export IDX_COMMAND_LAZY="api admin template-app swing super core domain migration discovery metric orchestration project statistic template user workflow mailbox"
 export IDX_COMMANDS="$IDX_ALL status update reset-master branch build clone atest versions $IDX_COMMAND_LAZY"
 export IDX_OPTIONS="-h --help"
 

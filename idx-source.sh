@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export IDX_SOURCE_VERSION=0.1.4
+export IDX_SOURCE_VERSION=0.2.0
 
 #
 # Sets environment variables for other scripts. Principally,
@@ -11,6 +11,7 @@ export IDX_SOURCE_VERSION=0.1.4
 
 # If WORKDIR is already set, use that value; otherwise you get this default
 export WORKDIR="${WORKDIR:-$HOME/github}"
+export SLACK_JAR="${SLACK_JAR:-$HOME/bin/idx-slack-client-0.0.1-SNAPSHOT.jar}"
 
 # Maintain order!
 export IDX_V1_PROJECTS="idx-api-app idx-admin-app idx-template-app idx-swing-apps"
@@ -23,7 +24,7 @@ export IDX_ALL="$IDX_PROJECTS"
 
 # Variables used for command completion
 export IDX_COMMAND_LAZY="api admin template-app swing super core domain migration discovery metric orchestration project statistic template user workflow mailbox"
-export IDX_COMMANDS="$IDX_ALL status update reset-master branch build clone atest versions $IDX_COMMAND_LAZY"
+export IDX_COMMANDS="$IDX_ALL status update reset-master branch build clone atest versions slack $IDX_COMMAND_LAZY"
 export IDX_OPTIONS="-h --help"
 
 export GITHUB_BASE="https://github.com"
@@ -70,6 +71,7 @@ COMMANDS:
   atest                 Initiate execution of acceptance tests (from the current project directory;
                         assumes the acceptance test module is running).
   versions              Update the version properties in the Maven pom.xml file.
+  slack                 Post to the 'idx-api-engineers' Slack channel.
 
 OPTIONS:
   -h | --help           Display this help. If a command follows, command-
@@ -84,12 +86,24 @@ DEPENDENCIES:
   docker                Container management
   pcre                  Pearl-compatible regex expression language utilities
   bash-completion       Bash command completion utility
+  idx-api-slack-client  The generated JAR file for "idx-api-slack-client".
+
+SLACK NOTIFICATION:
+  To use Slack notification, the following environment variables must be defined:
+
+  - SLACK_TOKEN         Slack application token for the 'idx-api-pr-notify' Slack app
+  - SLACK_JAR           JAR file location (default: ~/bin/idx-slack-client-0.0.1-SNAPSHOT.jar)
+  - SLACK_THREAD_ID     Optional Slack thread ID
 
 ERRORS:
   If an error occurs the script will exit with '1' and IDX_ERROR will contain
   detail information as to where in the script the error occurs.
 
 EOF
+}
+
+currentBranch() {
+  git branch | grep "\*" | cut -d" " -f2
 }
 
 cdToProject-usage() {
@@ -322,7 +336,8 @@ idx-branch() {
     local postfix
     local current_branch
 
-    current_branch="$(git branch | grep "\*" | cut -d" " -f2)"
+    current_branch="$(currentBranch)"
+
     if [[ "$current_branch" == "master" ]]; then
       prefix=${COLOR_LT_GREEN}
       postfix=${COLOR_NONE}
@@ -408,18 +423,58 @@ idx-clone() {
   popd >/dev/null || exit
 }
 
+_idx-versions() {
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  COMPREPLY=($(compgen -W "-k -keep-branch -l --local -q --quiet -s --skip-build -d --draft-pr" -- "$cur"))
+}
+
 idx-versions-usage() {
   cat <<-EOF
-USAGE: idx versions
+USAGE: idx versions [[-k | --keep-branch] [-l | --local] [-s | --skip-build] [-q | --quiet]]
 
 Update the Maven properties for the IDX dependencies (parent pom and core dependencies).
 See the Maven pom.xml configuration for the versions plugin.
 
+OPTIONS:
+  -k | --keep-branch    Keep the current branch (don't base the change on 'master')
+  -l | --local          Make all changes local only (no commit, push, PR, or Slack notification)
+  -s | --skip-build     Skip the sanity build
+  -q | --quiet          Keep quiet; no Slack notifications
+  -d | --draft-pr       Make the PR a draft
+
+By default, this script will do the following:
+  - checkout the master branch
+  - update the local branch from the up-stream remote (via 'pull')
+  - checkout a new branch
+  - update the Maven parent pom version
+  - update the Maven property versions
+  - do a clean, sanity build
+  - commit the changes
+  - push the branch to the remote
+  - create a PR
+  - send a notification to the #indexing-api-engineers Slack channel
+
 EOF
 }
 
+isDirectoryClean() {
+  git diff-index --quiet HEAD --
+}
+
 idx-versions() {
-  ## TODO options to create a branch if not on 'master', to test?, commit, push and create a PR.
+  ## TODO option to start AT module?
+  local keep_branch
+  local local_only
+  local build
+  local quiet
+  local draft_pr
+
+  keep_branch=false
+  local_only=false
+  build=true
+  quiet=false
+  draft_pr=false
+
   while [ $# -gt 0 ]; do
     case "$1" in
       -h | --help)
@@ -427,16 +482,103 @@ idx-versions() {
         IDX_ERROR="idx-versions - command help"
         return
         ;;
+      -k | --keep-branch)
+        keep_branch=true
+        shift
+        ;;
+      -l | --local)
+        local_only=true
+        shift
+        ;;
+      -s | --skip-build)
+        build=false
+        shift
+        ;;
+      -q | --quiet)
+        quiet=true
+        shift
+        ;;
+      -d | --draft-pr)
+        draft_pr=true
+        shift
+        ;;
       *)
         echo Option \'"$1"\' not recognized.
         idx-versions-usage
         IDX_ERROR="idx-versions - options"
-        return
+        return 1
         ;;
     esac
   done
 
+  local current_branch
+  current_branch="$(currentBranch)"
+
+  if ! $keep_branch; then
+    local branch_name
+
+    branch_name="versions-${RANDOM}"
+
+    if isDirectoryClean; then
+      if [[ "$current_branch" != "master" ]]; then
+        git checkout master
+      fi
+
+      git pull
+      git checkout -b "${branch_name}"
+      current_branch="${branch_name}"
+    else
+      echo Unclean git working directory.
+      IDX_ERROR="idx-versions - change to master"
+      return 1
+    fi
+  else
+    echo Keeping current branch \["${current_branch}"\].
+  fi
+
   mvn -U versions:update-parent versions:update-properties versions:commit
+
+  if $build; then
+    if ! idx-build; then
+      echo Build failed!
+      return 1
+    fi
+  else
+    echo Skipping sanity build.
+  fi
+
+  if ! $local_only; then
+    git commit -am "Update versions"
+    git push -u origin "${current_branch}"
+
+    local gh_options
+
+    if $draft_pr; then
+      gh_options="--draft"
+    fi
+    gh pr create --fill "${gh_options}"
+
+    if ! $quiet; then
+      local pr_url
+
+      pr_url="$(gh pr view | grep url | cut -f2)"
+      if [ -n "${pr_url}" ]; then
+        if [ -n "${SLACK_THREAD_ID}" ]; then
+          idx-slack -t "${SLACK_THREAD_ID}" "PR (update versions): ${pr_url}"
+        else
+          idx-slack "PR (update versions): ${pr_url}"
+        fi
+      else
+        echo No PR URL found. Skipping Slack notifications.
+        IDX_ERROR="idx-versions - no PR URL"
+        return 1
+      fi
+    else
+      echo Skipping Slack notifications.
+    fi
+  else
+    echo Skipping git commit and Slack notifications.
+  fi
 }
 
 idx-atest-usage() {
@@ -568,6 +710,107 @@ idx-build() {
   fi
 }
 
+_idx-slack() {
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  COMPREPLY=($(compgen -W "-p --post -t --thread -t --token" -- "$cur"))
+}
+
+idx-slack-usage() {
+  cat <<-EOF
+USAGE: idx slack [[-p | --post] [-t <thread id> | --thread <thread id>] [--token <token>]] <message>
+
+Post a message to the 'idx-api-engineeers' Slack channel.
+
+OPTIONS:
+  -p | --post     Create a normal post (default).
+                  Note: this command will set the SLACK_THREAD_ID environment variable with the ID of the post.
+  -t | --thread   Create a post in a thread. The argument "<thread id>" is the thread id of the parent post.
+                  Note: use '-t ${SLACK_THREAD_ID}' or '--thread ${SLACK_THREAD_ID}' to post to a previous post.
+  --token         Use the specified token. (Defaults to the value of the SLACK_TOKEN environment variable.)
+
+SLACK NOTIFICATION:
+  To use Slack notification, the following environment variables must be defined:
+
+  - SLACK_TOKEN         Slack application token for the 'idx-api-pr-notify' Slack app
+  - SLACK_JAR           JAR file location (ex, ~/bin/idx-slack-client-0.0.1-SNAPSHOT.jar)
+  - SLACK_THREAD_ID     Optional Slack thread ID
+
+EOF
+}
+
+idx-slack() {
+  local action
+  local thraedid
+  local token
+  local message
+
+  action=post
+  token=${SLACK_TOKEN}
+
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      -h | --help)
+        idx-slack-usage
+        IDX_ERROR="idx-slack - command help"
+        return
+        ;;
+      -p | --post)
+        action=post
+        shift
+        ;;
+      -t | --thread)
+        action=thread
+        shift
+        threadid="$1"
+        shift
+        ;;
+      --token)
+        shift
+        token="$1"
+        shift
+        ;;
+      *)
+        message="$1"
+        shift
+        ;;
+    esac
+  done
+
+  if [ -z "${token}" ]; then
+    echo ERROR: No Slack application token found!
+    IDX_ERROR="idx-slack - token"
+    idx-slack-usage
+    return 1
+  fi
+
+  if [[ "thread" == "${action}" && -z "${threadid}" ]]; then
+    echo ERROR: No Slack thread id found!
+    IDX_ERROR="idx-slack thread id"
+    idx-slack-usage
+    return 1
+  fi
+
+  if [ -z "${message}" ]; then
+    echo No message provided!
+    IDX_ERROR="idx-slack message"
+    idx-slack-usage
+    return 1
+  fi
+
+  if [[ -z "${SLACK_JAR}" || ! -a "${SLACK_JAR}" ]]; then
+    echo No SLACK_JAR environment variable!
+    idx-slack-usage
+    return 1
+  fi
+
+  if [ "post" == "${action}" ]; then
+    SLACK_THREAD_ID="$(java -jar "${SLACK_JAR}" --token="${token}" --post "${message}")"
+    export SLACK_THREAD_ID
+  else
+    java -jar "${SLACK_JAR}" --token="${token}" --reply --threadId="${threadid}" "${message}" >/dev/null
+  fi
+}
+
 _idx-all() {
   local i=1 subcommand_index
 
@@ -662,7 +905,7 @@ idx-all() {
       return 1
     }
     idx "$@"
-    if [ ! -z "$IDX_ERROR" ]; then
+    if [ -n "$IDX_ERROR" ]; then
       break
     fi
   done
@@ -797,6 +1040,11 @@ idx() {
       idx-versions ${helpargs:+"$helpargs"} "$@"
       break
       ;;
+    slack)
+      shift
+      idx-slack ${helpargs:+"$helpargs"} "$@"
+      break
+      ;;
     --) # end of all options
       shift
       ;;
@@ -863,6 +1111,14 @@ _idx() {
       ;;
     clone)
       _idx-clone
+      return 0
+      ;;
+    versions)
+      _idx-versions
+      return 0
+      ;;
+    slack)
+      _idx-slack
       return 0
       ;;
     *)

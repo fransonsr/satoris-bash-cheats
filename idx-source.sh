@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export IDX_SOURCE_VERSION=0.2.0
+export IDX_SOURCE_VERSION=0.2.1
 
 #
 # Sets environment variables for other scripts. Principally,
@@ -425,12 +425,12 @@ idx-clone() {
 
 _idx-versions() {
   local cur="${COMP_WORDS[COMP_CWORD]}"
-  COMPREPLY=($(compgen -W "-k -keep-branch -l --local -q --quiet -s --skip-build -d --draft-pr" -- "$cur"))
+  COMPREPLY=($(compgen -W "-k -keep-branch -l --local -q --quiet -s --skip-build -d --draft-pr -t --title" -- "$cur"))
 }
 
 idx-versions-usage() {
   cat <<-EOF
-USAGE: idx versions [[-k | --keep-branch] [-l | --local] [-s | --skip-build] [-q | --quiet]]
+USAGE: idx versions [[-k | --keep-branch] [-l | --local] [-s | --skip-build] [-q | --quiet] [--t <title> | --title <title>]]
 
 Update the Maven properties for the IDX dependencies (parent pom and core dependencies).
 See the Maven pom.xml configuration for the versions plugin.
@@ -441,6 +441,7 @@ OPTIONS:
   -s | --skip-build     Skip the sanity build
   -q | --quiet          Keep quiet; no Slack notifications
   -d | --draft-pr       Make the PR a draft
+  -t | --title          PR title (also prefix to the Slack message; default: "Update versions"
 
 By default, this script will do the following:
   - checkout the master branch
@@ -468,12 +469,14 @@ idx-versions() {
   local build
   local quiet
   local draft_pr
+  local pr_title
 
   keep_branch=false
   local_only=false
   build=true
   quiet=false
   draft_pr=false
+  pr_title="Update versions"
 
   while [ $# -gt 0 ]; do
     case "$1" in
@@ -500,6 +503,11 @@ idx-versions() {
         ;;
       -d | --draft-pr)
         draft_pr=true
+        shift
+        ;;
+      -t | --title)
+        shift
+        pr_title="$1"
         shift
         ;;
       *)
@@ -556,7 +564,7 @@ idx-versions() {
     if $draft_pr; then
       gh_options="--draft"
     fi
-    gh pr create --fill "${gh_options}"
+    gh pr create ${gh_options} --body "" --title "${pr_title}"
 
     if ! $quiet; then
       local pr_url
@@ -564,7 +572,7 @@ idx-versions() {
       pr_url="$(gh pr view | grep url | cut -f2)"
       if [ -n "${pr_url}" ]; then
         if [ -n "${SLACK_THREAD_ID}" ]; then
-          idx-slack -t "${SLACK_THREAD_ID}" "PR (update versions): ${pr_url}"
+          idx-slack -t "${SLACK_THREAD_ID}" "PR (${pr_title}): ${pr_url}"
         else
           idx-slack "PR (update versions): ${pr_url}"
         fi
@@ -692,9 +700,11 @@ idx-build() {
 
     if [[ $? > 0 ]]; then
       IDX_ERROR="idx-build"
+      return 1
     fi
   else
     IDX_ERROR="idx-build clean"
+    return 1
   fi
 
   if [[ $acceptance = true && -d acceptance ]]; then

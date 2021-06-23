@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export IDX_SOURCE_VERSION=0.2.1
+export IDX_SOURCE_VERSION=0.2.2
 
 #
 # Sets environment variables for other scripts. Principally,
@@ -15,16 +15,18 @@ export SLACK_JAR="${SLACK_JAR:-$HOME/bin/idx-slack-client-0.0.1-SNAPSHOT.jar}"
 
 # Maintain order!
 export IDX_V1_PROJECTS="idx-api-app idx-admin-app idx-template-app idx-swing-apps"
-export IDX_V2_LIBS="idx-api-super-pom idx-api-core idx-api-domain"
+export IDX_V2_SUPER_POM="idx-api-super-pom"
+export IDX_V2_LIBS="idx-api-core idx-api-domain"
 export IDX_V2_FLYWAY="idx-db-migration cmp-db-migration"
 export IDX_V2_VERTICALS="idx-discovery idx-metric idx-orchestration idx-project idx-statistic idx-template idx-user idx-workflow cmp-mailbox"
-export IDX_V2_PROJECTS="$IDX_V2_LIBS $IDX_V2_FLYWAY $IDX_V2_VERTICALS"
+export IDX_V2_PROJECTS="$IDX_API_IDX_V2_SUPER_POM $IDX_V2_LIBS $IDX_V2_FLYWAY $IDX_V2_VERTICALS"
+export IDX_V2_SPIKE="$IDX_V2_LIBS $IDX_V2_FLYWAY $IDX_V2_VERTICALS"
 export IDX_PROJECTS="$IDX_V2_PROJECTS $IDX_V1_PROJECTS"
-export IDX_ALL="$IDX_PROJECTS"
+export IDX_ALL="$IDX_V2_SUPER_POM $IDX_PROJECTS"
 
 # Variables used for command completion
 export IDX_COMMAND_LAZY="api admin template-app swing super core domain migration discovery metric orchestration project statistic template user workflow mailbox"
-export IDX_COMMANDS="$IDX_ALL status update reset-master branch build clone atest versions slack $IDX_COMMAND_LAZY"
+export IDX_COMMANDS="$IDX_ALL status update reset-master branch build clone atest versions slack spike $IDX_COMMAND_LAZY"
 export IDX_OPTIONS="-h --help"
 
 export GITHUB_BASE="https://github.com"
@@ -72,6 +74,7 @@ COMMANDS:
                         assumes the acceptance test module is running).
   versions              Update the version properties in the Maven pom.xml file.
   slack                 Post to the 'idx-api-engineers' Slack channel.
+  spike                 Create a 'spike' branch and update the root pom to SNAPSHOTs.
 
 OPTIONS:
   -h | --help           Display this help. If a command follows, command-
@@ -698,7 +701,7 @@ idx-build() {
     fi
     mvn $options
 
-    if [[ $? > 0 ]]; then
+    if [[ $? -gt 0 ]]; then
       IDX_ERROR="idx-build"
       return 1
     fi
@@ -821,6 +824,87 @@ idx-slack() {
   fi
 }
 
+_idx-spike() {
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  COMPREPLY=($(compgen -W "-a --abandon" -- "$cur"))
+}
+
+idx-spike-usage() {
+  cat <<-EOF
+USAGE: idx spike [-a | --abandon]
+
+Create (or abandon) a 'spike' branch. This updates the root pom file with SNAPSHOT versions
+of the idx-api-super-pom, idx-api-core and idx-api-domain versions. It will then perform
+a sanity build of the project. To create a 'spike' branch, the current branch must be 'master'.
+To abandon a 'spike' branch, the current branch must be 'spike'.
+
+OPTIONS:
+  -a | --abandon  Abandon the current 'spike' branch and revert to 'master'
+EOF
+}
+
+# TODO add option for local M2 directory for build
+idx-spike() {
+  local abandon=false
+  local current_branch
+
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      -h | --help)
+        idx-spike-usage
+        IDX_ERROR="idx-spike - command help"
+        return
+        ;;
+      -a | --abandon)
+        shift
+        abandon=true
+        ;;
+      *)
+        echo Option \'"$1"\' not recognized.
+        idx-build-usage
+        IDX_ERROR="idx-spike - options"
+        return
+        ;;
+    esac
+  done
+
+  current_branch="$(currentBranch)"
+
+  if $abandon; then
+    if [ "spike" != "$current_branch" ]; then
+      echo "INFO: Skipping; current branch must be 'spike'"
+      return 0
+    else
+      git checkout -f
+      git clean -fd
+      git checkout master
+      git branch -D spike
+    fi
+  else
+    if [ 'spike' != "$current_branch" ]; then
+      if [ 'master' != "$current_branch" ]; then
+        IDX_ERROR="idx-spike create"
+        echo "ERROR: Current branch must be 'master'"
+        return 1
+      fi
+
+      git checkout -b spike
+    fi
+
+    xmlstarlet ed --inplace -P -u "//_:parent[_:artifactId='idx-api-super-pom']/_:version" -v "1.2-SNAPSHOT" pom.xml
+    xmlstarlet ed -S --inplace -u "//_:idx-api-core.version" -v "2.2-SNAPSHOT" pom.xml
+    xmlstarlet ed -S --inplace -u "//_:idx-api-domain.version" -v "2.2-SNAPSHOT" pom.xml
+
+    idx build
+
+    if [[ $? -gt 0 ]]; then
+      IDX_ERROR="idx-spike"
+      return 1
+    fi
+
+  fi
+}
+
 _idx-all() {
   local i=1 subcommand_index
 
@@ -851,6 +935,14 @@ _idx-all() {
         subcommand_index=$i
         break
         ;;
+      versions)
+        subcommand_index=$i
+        break
+        ;;
+      spike)
+        subcommand_index=$i
+        break
+        ;;
     esac
     (( i++ ))
   done
@@ -878,6 +970,10 @@ _idx-all() {
         _idx-build
         return
         ;;
+      versions)
+        _idx-versions
+        return
+        ;;
       reset-master)
         COMPREPLY=()
         return
@@ -886,27 +982,63 @@ _idx-all() {
         _idx-clone
         return
         ;;
+      spike)
+        _idx-spike
+        return
+        ;;
     esac
     (( subcommand_index++ ))
   done
 
   local cur="${COMP_WORDS[COMP_CWORD]}"
-  COMPREPLY=($(compgen -W "-h --help status update branch reset-master build" -- "$cur"))
+  COMPREPLY=($(compgen -W "-h --help status update branch reset-master build versions spike" -- "$cur"))
+}
+
+idx-all-usage() {
+  echo <<-EOF
+USAGE: idx all [-v | --verticals] <command>
+
+Recursively execute <command> on all of the IDX projects.
+
+SUPPORTED COMMANDS:
+  status
+  update
+  branch
+  build
+  versions
+  reset-master
+  clone
+  spike
+
+OPTIONS:
+  -v | --verticals  Execute the command on the verticals (deployable projects) only.
+EOF
 }
 
 idx-all() {
-  case "$1" in
-    -h | --help)
-      idx "$@"
-      shift
-      return
-      ;;
-    *)
-      ;;
-  esac
+  local projects
+  projects="$IDX_ALL"
+
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      -h | --help)
+        idx-all-usage
+        IDX_ERROR="idx-all - command help"
+        return
+        ;;
+      -v | --verticals)
+        projects="$IDX_V1_PROJECTS $IDX_V2_VERTICALS"
+        shift
+        ;;
+      *)
+        break
+        ;;
+    esac
+  done
 
   pushd . >/dev/null
-  for dir in $IDX_ALL; do
+
+  for dir in $projects; do
     echo ========================
     echo PROJECT - "$dir"
     cd "$WORKDIR/$dir" || {
@@ -1055,6 +1187,11 @@ idx() {
       idx-slack ${helpargs:+"$helpargs"} "$@"
       break
       ;;
+    spike)
+      shift
+      idx-spike ${helpargs:+"$helpargs"} "$@"
+      break
+      ;;
     --) # end of all options
       shift
       ;;
@@ -1129,6 +1266,10 @@ _idx() {
       ;;
     slack)
       _idx-slack
+      return 0
+      ;;
+    spike)
+      _idx-spike
       return 0
       ;;
     *)

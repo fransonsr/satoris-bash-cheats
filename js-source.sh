@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export JS_SOURCE_VERSION=0.1.0
+export JS_SOURCE_VERSION=0.1.1
 
 #
 # Sets environment variables for other scripts. Principally,
@@ -445,24 +445,26 @@ js-build() {
     esac
   done
 
-  if $mvn_clean; then
-    mvn clean
-  fi
-
-  if [[ $? -eq 0 ]]; then
-    local options="install"
-    if [[ $local_m2_repository == true ]]; then
-      options="-Dmaven.repo.local=target/m2-repo $options"
+  if [[ -f pom.xml ]]; then
+    if $mvn_clean; then
+      mvn clean
     fi
-    mvn $options
 
-    if [[ $? -gt 0 ]]; then
-      JS_ERROR="js-build"
+    if [[ $? -eq 0 ]]; then
+      local options="install"
+      if [[ $local_m2_repository == true ]]; then
+        options="-Dmaven.repo.local=target/m2-repo $options"
+      fi
+      mvn $options
+
+      if [[ $? -gt 0 ]]; then
+        JS_ERROR="js-build"
+        return 1
+      fi
+    else
+      JS_ERROR="js-build clean"
       return 1
     fi
-  else
-    JS_ERROR="js-build clean"
-    return 1
   fi
 }
 

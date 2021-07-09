@@ -98,8 +98,6 @@ cdToProject() {
 
   PROJECT="$1"
 
-  echo BLAH $PROJECT
-
   if [ ! -d "$WORKDIR/$PROJECT" ]; then
     rootUsage
     echo " Error: Project directory for $PROJECT does not exist."

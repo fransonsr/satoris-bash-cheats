@@ -332,7 +332,7 @@ _js-clone() {
 
 js-clone-usage() {
   cat <<-EOF
-USAGE js clone [[-a | --all]] <repo name(s)>
+USAGE js clone [[-a | --all] | [-d | --delete]] <repo name(s)>
 
 Clone the github repositories specified by the space-delimited list of repository names. 
 The new local repository will be cloned into the 'WORKDIR' directory.

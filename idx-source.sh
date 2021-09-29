@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export IDX_SOURCE_VERSION=0.2.2
+export IDX_SOURCE_VERSION=0.2.3
 
 #
 # Sets environment variables for other scripts. Principally,
@@ -211,7 +211,7 @@ idx-update() {
       *)
         echo Option \'"$1"\' not recognized.
         idx-update-usage
-        IDX_ERROR="idx-reset-master - options"
+        IDX_ERROR="idx-update - options"
         return
         ;;
     esac
@@ -239,19 +239,21 @@ EOF
 }
 
 idx-reset-master() {
-  case "$1" in
-    -h | --help)
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      -h | --help)
+        idx-reset-master-usage
+        IDX_ERROR="idx-reset-master - command help"
+        return
+      ;;
+    *)
+      echo Option \'"$1"\' not recognized.
       idx-reset-master-usage
-      IDX_ERROR="idx-reset-master - command help"
+      IDX_ERROR="idx-reset-master - options"
       return
-    ;;
-  *)
-    echo Option \'"$1"\' not recognized.
-    idx-reset-master-usage
-    IDX_ERROR="idx-reset-master - options"
-    return
-    ;;
-  esac
+      ;;
+    esac
+  done
 
   local modified_count="$(git status --porcelain=2 | wc -l)"
   if [[ "$modified_count" -gt 0 ]]; then

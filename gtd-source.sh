@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export GTD_SOURCE_VERSION=0.0.1
+export GTD_SOURCE_VERSION=0.0.2
 
 #
 # Sets environment variables for other scripts. Principally,
@@ -14,11 +14,11 @@ export WORKDIR="${WORKDIR:-$HOME/github}"
 export SLACK_JAR="${SLACK_JAR:-$HOME/bin/idx-slack-client-0.0.1-SNAPSHOT.jar}"
 
 # Maintain order!
-export GTD_PROJECTS="gtd-data gtd-aletheia gtd-workflow"
+export GTD_PROJECTS="gtd-core gtd-data gtd-aletheia gtd-workflow"
 export GTD_ALL=${GTD_PROJECTS}
 
 # Variables used for command completion
-export GTD_COMMAND_LAZY="data aletheia workflow"
+export GTD_COMMAND_LAZY="core data aletheia workflow"
 export GTD_COMMANDS="$GTD_PROJECTS status update reset-master branch build clone atest versions slack spike $GTD_COMMAND_LAZY"
 export GTD_OPTIONS="-h --help"
 
@@ -41,6 +41,7 @@ COMMANDS:
   gtd-data            Change the CWD to the project (lazy: 'data').
   gtd-aletheia          "   (lazy: 'aletheia')
   gtd-workflow          "   (lazy: 'workflow')
+  gtd-core              "   (lazy: 'core')
 
   status                Check the git status of the repository.
   update                Update the repository.
@@ -1044,6 +1045,9 @@ gtd() {
       gtd-all "$@"
       break
       ;;
+    gtd-core | core)
+      project=${project:-gtd-core}
+      ;&
     gtd-aletheia | aletheia)
       project=${project:-gtd-aletheia}
       ;&

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export IDX_SOURCE_VERSION=0.2.3
+export IDX_SOURCE_VERSION=0.2.4
 
 #
 # Sets environment variables for other scripts. Principally,
@@ -38,7 +38,7 @@ COLOR_LT_RED='\e[1;31m'
 COLOR_RED='\e[0;31m'
 COLOR_NONE='\e[0m'
 
-rootUsage() {
+idxRootUsage() {
   cat <<-EOF
 USAGE: idx [all] [[-h|--help]] <command>
 
@@ -132,7 +132,7 @@ cdToProject() {
 
   PROJECT="$1"
   if [ ! -d "$WORKDIR/$PROJECT" ]; then
-    rootUsage
+    idxRootUsage
     echo " Error: Project directory for $PROJECT does not exist."
     IDX_ERROR="cdToProject"
     return
@@ -1068,7 +1068,7 @@ idx() {
 
   # validate there is a valid WORKDIR
   if [ ! -d "$WORKDIR" ]; then
-    rootUsage
+    idxRootUsage
     echo " Error: WORKDIR does not exist or is not a directory."
     return 1
   fi
@@ -1198,7 +1198,7 @@ idx() {
       shift
       ;;
     *) # no more options
-      rootUsage
+      idxRootUsage
       echo " Error: no command found."
       IDX_ERROR="idx"
       break

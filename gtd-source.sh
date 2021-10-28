@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export GTD_SOURCE_VERSION=0.0.2
+export GTD_SOURCE_VERSION=0.0.3
 
 #
 # Sets environment variables for other scripts. Principally,
@@ -31,7 +31,7 @@ COLOR_LT_RED='\e[1;31m'
 COLOR_RED='\e[0;31m'
 COLOR_NONE='\e[0m'
 
-rootUsage() {
+gtdRootUsage() {
   cat <<-EOF
 USAGE: gtd [all] [[-h|--help]] <command>
 
@@ -111,7 +111,7 @@ cdToProject() {
 
   PROJECT="$1"
   if [ ! -d "$WORKDIR/$PROJECT" ]; then
-    rootUsage
+    gtdRootUsage
     echo " Error: Project directory for $PROJECT does not exist."
     GTD_ERROR="cdToProject"
     return
@@ -1029,7 +1029,7 @@ gtd() {
 
   # validate there is a valid WORKDIR
   if [ ! -d "$WORKDIR" ]; then
-    rootUsage
+    gtdRootUsage
     echo " Error: WORKDIR does not exist or is not a directory."
     return 1
   fi
@@ -1117,7 +1117,7 @@ gtd() {
       shift
       ;;
     *) # no more options
-      rootUsage
+      gtdRootUsage
       echo " Error: no command found."
       GTD_ERROR="gtd"
       break

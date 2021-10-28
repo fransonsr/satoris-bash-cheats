@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export JS_SOURCE_VERSION=0.1.1
+export JS_SOURCE_VERSION=0.1.2
 
 #
 # Sets environment variables for other scripts. Principally,
@@ -29,7 +29,7 @@ COLOR_LT_RED='\e[1;31m'
 COLOR_RED='\e[0;31m'
 COLOR_NONE='\e[0m'
 
-rootUsage() {
+jsRootUsage() {
   cat <<-EOF
 USAGE: js [all] [[-h|--help]] <command>
 
@@ -99,7 +99,7 @@ cdToProject() {
   PROJECT="$1"
 
   if [ ! -d "$WORKDIR/$PROJECT" ]; then
-    rootUsage
+    jsRootUsage
     echo " Error: Project directory for $PROJECT does not exist."
     JS_ERROR="cdToProject"
     return
@@ -605,7 +605,7 @@ js() {
 
   # validate there is a valid WORKDIR
   if [ ! -d "$WORKDIR" ]; then
-    rootUsage
+    jsRootUsage
     echo " Error: WORKDIR does not exist or is not a directory."
     return 1
   fi
@@ -685,7 +685,7 @@ js() {
       shift
       ;;
     *) # no more options
-      rootUsage
+      jsRootUsage
       echo " Error: no command found."
       JS_ERROR="js"
       break

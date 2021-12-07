@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export GTD_SOURCE_VERSION=0.0.3
+export GTD_SOURCE_VERSION=0.0.4
 
 #
 # Sets environment variables for other scripts. Principally,
@@ -14,11 +14,11 @@ export WORKDIR="${WORKDIR:-$HOME/github}"
 export SLACK_JAR="${SLACK_JAR:-$HOME/bin/idx-slack-client-0.0.1-SNAPSHOT.jar}"
 
 # Maintain order!
-export GTD_PROJECTS="gtd-core gtd-data gtd-aletheia gtd-workflow"
+export GTD_PROJECTS="gtd-core gtd-data gtd-aletheia gtd-workflow gtd-storage"
 export GTD_ALL=${GTD_PROJECTS}
 
 # Variables used for command completion
-export GTD_COMMAND_LAZY="core data aletheia workflow"
+export GTD_COMMAND_LAZY="core data aletheia workflow storage"
 export GTD_COMMANDS="$GTD_PROJECTS status update reset-master branch build clone atest versions slack spike $GTD_COMMAND_LAZY"
 export GTD_OPTIONS="-h --help"
 
@@ -41,6 +41,7 @@ COMMANDS:
   gtd-data            Change the CWD to the project (lazy: 'data').
   gtd-aletheia          "   (lazy: 'aletheia')
   gtd-workflow          "   (lazy: 'workflow')
+  gtd-storage           "   (lazy: 'storage')
   gtd-core              "   (lazy: 'core')
 
   status                Check the git status of the repository.
@@ -344,7 +345,7 @@ gtd-clone-usage() {
   cat <<-EOF
 USAGE gtd clone [[-a | --all]] <repo name(s)>
 
-Clone the github repositories specified by the space-delimited list of repository names. 
+Clone the github repositories specified by the space-delimited list of repository names.
 The new local respoistory will be cloned into the 'WORKDIR' directory.
 
 OPTIONS:
@@ -1053,6 +1054,9 @@ gtd() {
       ;&
     gtd-workflow | workflow)
       project=${project:-gtd-workflow}
+      ;&
+    gtd-storage | storage)
+      project=${project:-gtd-storage}
       ;&
     gtd-data | data)
       project=${project:-gtd-data}

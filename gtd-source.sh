@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export GTD_SOURCE_VERSION=0.0.4
+export GTD_SOURCE_VERSION=0.0.5
 
 #
 # Sets environment variables for other scripts. Principally,
@@ -680,7 +680,7 @@ gtd-build() {
     return 1
   fi
 
-  if [[ $server = true && -d server ]]; then
+  if [[ $server = true && -d webapp ]]; then
     pushd webapp >/dev/null || exit
     java -jar target/${name}-webapp.jar
     popd >/dev/null || exit

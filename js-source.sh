@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export JS_SOURCE_VERSION=0.1.2
+export JS_SOURCE_VERSION=0.2.2
 
 #
 # Sets environment variables for other scripts. Principally,
@@ -13,10 +13,10 @@ export JS_SOURCE_VERSION=0.1.2
 export WORKDIR="${WORKDIR:-$HOME/github}"
 
 # Maintain order!
-export JS_PROJECTS="java-stack java-stack-assertj java-stack-identity java-stack-initializer java-stack-issues java-stack-jdbc java-stack-secrets java-stack-testapp"
+export JS_PROJECTS="java-stack java-stack-assertj java-stack-identity java-stack-initializer java-stack-issues java-stack-jdbc java-stack-secrets java-stack-testapp java-stack-incubator"
 
 # Variables used for command completion
-export JS_COMMAND_LAZY="stack assertj identity initializer issues jdbc secrets testapp"
+export JS_COMMAND_LAZY="stack assertj identity initializer issues jdbc secrets testapp incubator"
 export JS_COMMANDS="$JS_PROJECTS status update reset-master branch build clone $JS_COMMAND_LAZY"
 export JS_OPTIONS="-h --help"
 
@@ -35,7 +35,7 @@ USAGE: js [all] [[-h|--help]] <command>
 
 COMMANDS:
   all                 Recursively execute the command in each of the project
-  
+
   java-stack                Change the CWD to the project (lazy: 'stack').
   java-stack-assertj          "  (lazy: 'assertj').
   java-stack-identity         "  (lazy: 'identity').
@@ -44,6 +44,7 @@ COMMANDS:
   java-stack-jdbc             "  (lazy: 'jdbc').
   java-stack-secrets          "  (lazy: 'secrets').
   java-stack-testapp          "  (lazy: 'testapp').
+  java-stack-incubator        "  (lazy: 'incubator').
 
   status                Check the git status of the repository.
   update                Update the repository.
@@ -334,7 +335,7 @@ js-clone-usage() {
   cat <<-EOF
 USAGE js clone [[-a | --all] | [-d | --delete]] <repo name(s)>
 
-Clone the github repositories specified by the space-delimited list of repository names. 
+Clone the github repositories specified by the space-delimited list of repository names.
 The new local repository will be cloned into the 'WORKDIR' directory.
 
 OPTIONS:
@@ -641,6 +642,9 @@ js() {
       ;&
     java-stack-secrets | secrets)
       project=${project:-java-stack-secrets}
+      ;&
+    java-stack-incubator | incubator)
+      project=${project:-java-stack-incubator}
       ;&
     java-stack-testapp | testapp)
       project=${project:-java-stack-testapp}

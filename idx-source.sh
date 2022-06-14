@@ -367,7 +367,7 @@ idx-clone-usage() {
   cat <<-EOF
 USAGE idx clone [[-a | --all]] <repo name(s)>
 
-Clone the github repositories specified by the space-delimited list of repository names. 
+Clone the github repositories specified by the space-delimited list of repository names.
 The new local respoistory will be cloned into the 'WORKDIR' directory.
 
 OPTIONS:
@@ -550,6 +550,13 @@ idx-versions() {
   fi
 
   mvn -U versions:update-parent versions:update-properties versions:commit
+
+  if isDirectoryClean; then
+    echo No modifications to the branch.
+    git checkout master
+    git branch -d "${branch_name}"
+    return 0
+  fi
 
   if $build; then
     if ! idx-build; then

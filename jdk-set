@@ -1,0 +1,43 @@
+#!/bin/bash 
+
+JDK8=java-1.8.0-amazon-corretto
+JDK11=java-11-amazon-corretto
+JDK17=java-17-amazon-corretto
+
+SELECTION=${JDK8}
+JDK_VER=8
+
+case "$1" in 
+  8)
+    JDK_VER=8
+    SELECTION=${JDK8}
+    ;;
+  11)
+    JDK_VER=11
+    SELECTION=${JDK11}
+    ;;
+  17)
+    JDK_VER=17
+    SELECTION=${JDK17}
+    ;;
+  *)
+    echo "Unknown option. Using default ${SELECTION}"
+    ;;
+esac
+
+# sudo update-java-alternatives -s ${SELECTION}
+export JAVA_HOME=/usr/lib/jvm/${SELECTION}
+export PATH=${JAVA_HOME}/bin:${PATH}
+
+jdk_ver_fg="\[\033[38;5;246m\]"
+jdk_ver_bg="\[\033[48;5;236m\]"
+jdk_ver_txt="\[\033[38;5;009m\]"
+ps_fg="\[\033[38;5;033m\]"
+reset="\[\033[0m\]"
+dir_fg="\[\033[38;5;045m\]"
+
+posh_prefix="${jdk_ver_bg}${jdk_ver_fg}jdk(${jdk_ver_txt}${JDK_VER}${jdk_ver_fg})${reset}: ${dir_fg}\w"
+posh_suffix="${ps_fg}\n\$${reset} "
+
+PROMPT_COMMAND='__posh_git_ps1 '\"${posh_prefix}\"' '\"${posh_suffix}\"
+

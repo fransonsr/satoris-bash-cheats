@@ -1,3 +1,0 @@
-#!/bin/bash 
-
-mvn -U org.familysearch.plugins:paas-sysps-maven-plugin:1.0.b55:check

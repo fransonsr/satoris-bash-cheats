@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export IDX_SOURCE_VERSION=0.2.4
+export IDX_SOURCE_VERSION=0.3.0
 
 #
 # Sets environment variables for other scripts. Principally,
@@ -843,9 +843,8 @@ idx-spike-usage() {
 USAGE: idx spike [-a | --abandon]
 
 Create (or abandon) a 'spike' branch. This updates the root pom file with SNAPSHOT versions
-of the idx-api-super-pom, idx-api-core and idx-api-domain versions. It will then perform
-a sanity build of the project. To create a 'spike' branch, the current branch must be 'master'.
-To abandon a 'spike' branch, the current branch must be 'spike'.
+of the idx-api-super-pom, idx-api-core and idx-api-domain versions.  To create a 'spike' branch,
+the current branch must be 'master'. To abandon a 'spike' branch, the current branch must be 'spike'.
 
 OPTIONS:
   -a | --abandon  Abandon the current 'spike' branch and revert to 'master'
@@ -903,8 +902,6 @@ idx-spike() {
     xmlstarlet ed --inplace -P -u "//_:parent[_:artifactId='idx-api-super-pom']/_:version" -v "1.2-SNAPSHOT" pom.xml
     xmlstarlet ed -S --inplace -u "//_:idx-api-core.version" -v "2.2-SNAPSHOT" pom.xml
     xmlstarlet ed -S --inplace -u "//_:idx-api-domain.version" -v "2.2-SNAPSHOT" pom.xml
-
-    idx build
 
     if [[ $? -gt 0 ]]; then
       IDX_ERROR="idx-spike"
@@ -1005,7 +1002,7 @@ _idx-all() {
 
 idx-all-usage() {
   echo <<-EOF
-USAGE: idx all [-v | --verticals] <command>
+USAGE: idx all [[-v | --verticals]|[-f <repo> | --from <repo>]] <command>
 
 Recursively execute <command> on all of the IDX projects.
 
@@ -1020,13 +1017,15 @@ SUPPORTED COMMANDS:
   spike
 
 OPTIONS:
-  -v | --verticals  Execute the command on the verticals (deployable projects) only.
+  -v | --verticals            Execute the command on the verticals (deployable projects) only.
+  -f <repo> | --from <repo>   Begin execution with '<repo>'.
 EOF
 }
 
 idx-all() {
   local projects
   projects="$IDX_ALL"
+  from_project=""
 
   while [ $# -gt 0 ]; do
     case "$1" in
@@ -1039,6 +1038,11 @@ idx-all() {
         projects="$IDX_V1_PROJECTS $IDX_V2_VERTICALS"
         shift
         ;;
+      -f | --from)
+        shift
+        from_project="$1"
+        shift
+        ;;
       *)
         break
         ;;
@@ -1048,6 +1052,12 @@ idx-all() {
   pushd . >/dev/null
 
   for dir in $projects; do
+    if [[ ("$from_project" != "") && ("$dir" != "$from_project") ]];
+    then
+      echo "Skipping project $dir"
+      continue
+    fi
+    from_project=""
     echo ========================
     echo PROJECT - "$dir"
     cd "$WORKDIR/$dir" || {

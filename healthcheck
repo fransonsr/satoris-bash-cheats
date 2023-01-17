@@ -92,7 +92,7 @@ _healthcheck() {
         echo -n idx-statistic: ; _assertVitals $SERVER/statistic/.well-known/healthcheck/vitals$QUERY
 #        echo -n idx-message: ; _assertVitals $SERVER/indexing-service/message/.well-known/healthcheck/vitals$QUERY
         echo -n idx-orchestration: ; _assertVitals $SERVER/orchestration/.well-known/healthcheck/vitals$QUERY
-#        echo -n cmp-mailbox: ; _assertVitals $SERVER/fst/mailbox/.well-known/healthcheck/vitals$QUERY
+        echo -n cmp-mailbox: ; _assertVitals $SERVER/mailbox/.well-known/healthcheck/vitals$QUERY
         echo Health $HEALTH: server: $SERVER
         echo
 }

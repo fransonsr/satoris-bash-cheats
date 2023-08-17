@@ -13,10 +13,10 @@ export JS_SOURCE_VERSION=0.2.2
 export WORKDIR="${WORKDIR:-$HOME/github}"
 
 # Maintain order!
-export JS_PROJECTS="java-stack java-stack-assertj java-stack-identity java-stack-initializer java-stack-issues java-stack-jdbc java-stack-secrets java-stack-testapp java-stack-incubator java-stack-profile"
+export JS_PROJECTS="java-stack java-stack-assertj java-stack-identity java-stack-initializer java-stack-issues java-stack-jdbc java-stack-secrets java-stack-testapp java-stack-incubator java-stack-profile java-stack-cloud-config"
 
 # Variables used for command completion
-export JS_COMMAND_LAZY="stack assertj identity initializer issues jdbc secrets testapp incubator profile"
+export JS_COMMAND_LAZY="stack assertj identity initializer issues jdbc secrets testapp incubator profile config"
 export JS_COMMANDS="$JS_PROJECTS status update reset-master branch build clone $JS_COMMAND_LAZY"
 export JS_OPTIONS="-h --help"
 
@@ -46,6 +46,7 @@ COMMANDS:
   java-stack-testapp          "  (lazy: 'testapp').
   java-stack-incubator        "  (lazy: 'incubator').
   java-stack-profile          "  (lazy: 'profile').
+  java-stack-cloud-config     "  (lazy: 'config').
 
   status                Check the git status of the repository.
   update                Update the repository.
@@ -649,6 +650,9 @@ js() {
       ;&
     java-stack-profile | profile)
       project=${project:-java-stack-profile}
+      ;&
+    java-stack-cloud-config | config)
+      project=${project:-java-stack-cloud-config}
       ;&
     java-stack-testapp | testapp)
       project=${project:-java-stack-testapp}

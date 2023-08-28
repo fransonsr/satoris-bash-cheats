@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export RS_SOURCE_VERSION=0.1.1
+export RS_SOURCE_VERSION=0.1.2
 
 #
 # Sets environment variables for other scripts. Principally,
@@ -740,7 +740,7 @@ rs() {
       shift
       ;;
     *)
-      if [[ "$#" -gt 1 && "$RS_PROJECTS" == *"$1"* ]]; then
+      if [[ "$#" -ge 1 && "$RS_PROJECTS" == *"$1"* ]]; then
         project="$1"
         shift
         cdToProject ${helpargs:+"$helpargs"} "$project" "$@"

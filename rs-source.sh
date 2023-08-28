@@ -58,6 +58,7 @@ COMMANDS:
   sls-model                   "
   sls-templates               "
   sls-template-store          "
+  sls-test-utils              "
 
   sls-dlq-worker          Change the CWD to the project (Internals)
   sls-internal-messaging      "

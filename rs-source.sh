@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export RS_SOURCE_VERSION=0.1.3
+export RS_SOURCE_VERSION=0.2
 
 #
 # Sets environment variables for other scripts. Principally,
@@ -73,12 +73,14 @@ COMMANDS:
   sls-consumers               " (lazy: "consumers")
   sls-persistence             " (lazy: "persistence")
 
+  branch                Report on the repository's branches.
+  build                 Build the repository.
+  clean                 Perform a Maven clean of the project.
+  clone                 Clone github repositories.
+  graph                 Create dependency graphs.
+  reset-master          Force a reset of the local master branch to the remote branch.
   status                Check the git status of the repository.
   update                Update the repository.
-  branch                Report on the repository's branches.
-  reset-master          Force a reset of the local master branch to the remote branch.
-  build                 Build the repository.
-  clone                 Clone github repositories.
 
 OPTIONS:
   -h | --help           Display this help. If a command follows, command-
@@ -516,6 +518,54 @@ rs-build() {
   fi
 }
 
+rs-graph-usage() {
+  cat <<-EOF
+  USAGE: rs graph [[-d | --duplicates]]
+
+  Generate dependency graph for the project's artifacts.
+
+  OPTIONS:
+    -d | --duplicates           Include duplicate paths to artifacts.
+EOF
+}
+
+_rs-graph() {
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  COMPREPLY=($(compgen -W "-d --duplicates" -- "$cur"))
+}
+
+rs-graph() {
+  local args
+  args=""
+
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      -h | --help)
+        rs-graph-usage
+        RS_ERROR="rs-graph - command help"
+        return
+        ;;
+      -d | --duplicates)
+        shift
+        args="-DshowDuplicates"
+        ;;
+      *)
+        echo Option \'"$1"\' not recognized.
+        rs-build-usage
+        RS_ERROR="rs-build - options"
+        return
+        ;;
+    esac
+  done
+
+  mvn depgraph:graph ${args}
+
+}
+
+rs-clean() {
+  mvn clean
+}
+
 _rs-all() {
   local i=1 subcommand_index
 
@@ -546,6 +596,10 @@ _rs-all() {
         subcommand_index=$i
         break
         ;;
+      clean)
+        subcommand_index=$i
+        break
+        ;;
     esac
     (( i++ ))
   done
@@ -571,6 +625,10 @@ _rs-all() {
         ;;
       build)
         _rs-build
+        return
+        ;;
+      clean)
+        _rs-clean
         return
         ;;
       reset-master)
@@ -736,6 +794,16 @@ rs() {
       rs-clone ${helpargs:+"$helpargs"} "$@"
       break
       ;;
+    clean)
+      shift
+      rs-clean ${helpargs:+"$helpargs"} "$@"
+      break
+      ;;
+    graph)
+      shift
+      rs-graph ${helpargs:+"$helpargs"} "$@"
+      break
+      ;;
     --) # end of all options
       shift
       ;;
@@ -808,6 +876,10 @@ _rs() {
       ;;
     clone)
       _rs-clone
+      return 0
+      ;;
+    graph)
+      _rs-graph
       return 0
       ;;
     *)

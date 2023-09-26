@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export RS_SOURCE_VERSION=0.2
+export RS_SOURCE_VERSION=0.2.3
 
 #
 # Sets environment variables for other scripts. Principally,
@@ -16,12 +16,12 @@ export WORKDIR="${WORKDIR:-$HOME/github}"
 export RS_INTERFACE_PROJECTS="cds-browser cds-export cds-publish-dates cds-spark-ami cds-ui-web sls-bulk-export sls-contextual-treatments slsdata-convert slsdata-gedcomx slsdata-treatments sls-spark-jobs"
 export RS_TEMPLATES_PROJECTS="sls-client-utils slsdata-gedcomx-lite sls-fixup-worker sls-model sls-templates sls-template-store sls-test-utils"
 export RS_INTERNALS_PROJECTS="sls-dlq-worker sls-internal-messaging sls-internal-workers sls-reconcile sls-sqs-worker sls-web-app"
-export RS_PERSISTENCE_PROJECTS="cds2-root cds-journal-worker cds-to-gedcomx gedcomx-builder recapi sls-consumers sls-persistence"
-export RS_PROJECTS="${RS_INTERFACE_PROJECTS} ${RS_TEMPLATES_PROJECTS} ${RS_INTERNALS_PROJECTS} $RS_PERSISTENCE_PROJECTS"
+export RS_PERSISTENCE_PROJECTS="cds2-root cds-journal-worker cds-sls-model cds-to-gedcomx gedcomx-builder ram recapi sls-consumers sls-persistence"
+export RS_PROJECTS="${RS_INTERFACE_PROJECTS} ${RS_TEMPLATES_PROJECTS} ${RS_INTERNALS_PROJECTS} ${RS_PERSISTENCE_PROJECTS}"
 
 # Variables used for command completion
 export RS_COMMAND_LAZY="root consumers persistence"
-export RS_COMMANDS="$RS_PROJECTS status update reset-master branch build clone $RS_COMMAND_LAZY"
+export RS_COMMANDS="${RS_PROJECTS} status update reset-master branch build clone ${RS_COMMAND_LAZY}"
 export RS_OPTIONS="-h --help"
 
 export GITHUB_BASE="https://github.com"
@@ -68,7 +68,11 @@ COMMANDS:
   sls-web-app                 "
 
   cds2-root               Change the CWD to the project (Persistence; lazy: "root")
+  cds-journal-worker          "
+  cds-sls-model               "
+  cds-to-gedcomx              "
   gedcomx-builder             "
+  ram                         "
   recapi                      "
   sls-consumers               " (lazy: "consumers")
   sls-persistence             " (lazy: "persistence")
@@ -526,12 +530,13 @@ rs-graph-usage() {
 
   OPTIONS:
     -d | --duplicates           Include duplicate paths to artifacts.
+    -v | --versions             Include artifact versions.
 EOF
 }
 
 _rs-graph() {
   local cur="${COMP_WORDS[COMP_CWORD]}"
-  COMPREPLY=($(compgen -W "-d --duplicates" -- "$cur"))
+  COMPREPLY=($(compgen -W "-d --duplicates -v --versions" -- "$cur"))
 }
 
 rs-graph() {
@@ -547,7 +552,11 @@ rs-graph() {
         ;;
       -d | --duplicates)
         shift
-        args="-DshowDuplicates"
+        args="${args} -DshowDuplicates"
+        ;;
+      -v | --versions)
+        args="${args} -DshowVersions"
+        shift
         ;;
       *)
         echo Option \'"$1"\' not recognized.

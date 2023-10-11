@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export RS_SOURCE_VERSION=0.2.5
+export RS_SOURCE_VERSION=0.3.1
 
 #
 # Sets environment variables for other scripts. Principally,
@@ -13,15 +13,16 @@ export RS_SOURCE_VERSION=0.2.5
 export WORKDIR="${WORKDIR:-$HOME/github}"
 
 # Maintain order!
+export RS_COMMON_PROJECTS="records-storage-df"
 export RS_INTERFACE_PROJECTS="cds-browser cds-export cds-publish-dates cds-spark-ami cds-ui-web sls-bulk-export sls-contextual-treatments slsdata-convert slsdata-gedcomx slsdata-treatments sls-spark-jobs"
 export RS_TEMPLATES_PROJECTS="sls-client-utils slsdata-gedcomx-lite sls-fixup-worker sls-model sls-templates sls-template-store sls-test-utils"
 export RS_INTERNALS_PROJECTS="sls-dlq-worker sls-internal-messaging sls-internal-workers sls-reconcile sls-sqs-worker sls-web-app"
 export RS_PERSISTENCE_PROJECTS="cds2-root cds-journal-worker cds-sls-model cds-to-gedcomx gedcomx-builder ram ramsak recapi sls-consumers sls-locking-service sls-persistence"
-export RS_PROJECTS="${RS_INTERFACE_PROJECTS} ${RS_TEMPLATES_PROJECTS} ${RS_INTERNALS_PROJECTS} ${RS_PERSISTENCE_PROJECTS}"
+export RS_PROJECTS="${RS_COMMON_PROJECTS} ${RS_INTERFACE_PROJECTS} ${RS_TEMPLATES_PROJECTS} ${RS_INTERNALS_PROJECTS} ${RS_PERSISTENCE_PROJECTS}"
 
 # Variables used for command completion
 export RS_COMMAND_LAZY="root consumers persistence"
-export RS_COMMANDS="${RS_PROJECTS} status update reset-master branch build clone ${RS_COMMAND_LAZY}"
+export RS_COMMANDS="${RS_PROJECTS} status update reset-master branch build clone jakarta-migrate ${RS_COMMAND_LAZY}"
 export RS_OPTIONS="-h --help"
 
 export GITHUB_BASE="https://github.com"
@@ -79,6 +80,8 @@ COMMANDS:
   sls-locking-service         "
   sls-persistence             " (lazy: "persistence")
 
+  records-storage-df       Change the CWD to the project (Common projects)
+
   branch                Report on the repository's branches.
   build                 Build the repository.
   clean                 Perform a Maven clean of the project.
@@ -87,6 +90,7 @@ COMMANDS:
   reset-master          Force a reset of the local master branch to the remote branch.
   status                Check the git status of the repository.
   update                Update the repository.
+  jakarta-migrate       Run Openrewrite's migration of Java EE to Jakarta EE libraries.
 
 OPTIONS:
   -h | --help           Display this help. If a command follows, command-
@@ -526,7 +530,7 @@ rs-build() {
 
 rs-graph-usage() {
   cat <<-EOF
-  USAGE: rs graph [[-d | --duplicates]]
+  USAGE: rs graph [[-d | --duplicates] | [-v | --versions]]
 
   Generate dependency graph for the project's artifacts.
 
@@ -575,6 +579,13 @@ rs-graph() {
 
 rs-clean() {
   mvn clean
+}
+
+rs-jakarta-migrate() {
+  # main Jakarta EE libraries
+  mvn -U org.openrewrite.maven:rewrite-maven-plugin:run \
+    -Drewrite.recipeArtifactCoordinates=org.openrewrite.recipe:rewrite-migrate-java:RELEASE \
+    -Drewrite.activeRecipes=org.openrewrite.java.migrate.jakarta.JavaxMigrationToJakarta
 }
 
 _rs-all() {
@@ -813,6 +824,11 @@ rs() {
     graph)
       shift
       rs-graph ${helpargs:+"$helpargs"} "$@"
+      break
+      ;;
+    jakarta-migrate)
+      shift
+      rs-jakarta-migrate ${helpargs:+"$helpargs"} "$@"
       break
       ;;
     --) # end of all options

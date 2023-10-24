@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export RS_SOURCE_VERSION=0.3.1
+export RS_SOURCE_VERSION=0.3.2
 
 #
 # Sets environment variables for other scripts. Principally,
@@ -13,7 +13,7 @@ export RS_SOURCE_VERSION=0.3.1
 export WORKDIR="${WORKDIR:-$HOME/github}"
 
 # Maintain order!
-export RS_COMMON_PROJECTS="records-storage-df"
+export RS_COMMON_PROJECTS="records-storage-df records-storage-eol"
 export RS_INTERFACE_PROJECTS="cds-browser cds-export cds-publish-dates cds-spark-ami cds-ui-web sls-bulk-export sls-contextual-treatments slsdata-convert slsdata-gedcomx slsdata-treatments sls-spark-jobs"
 export RS_TEMPLATES_PROJECTS="sls-client-utils slsdata-gedcomx-lite sls-fixup-worker sls-model sls-templates sls-template-store sls-test-utils"
 export RS_INTERNALS_PROJECTS="sls-dlq-worker sls-internal-messaging sls-internal-workers sls-reconcile sls-sqs-worker sls-web-app"
@@ -80,7 +80,8 @@ COMMANDS:
   sls-locking-service         "
   sls-persistence             " (lazy: "persistence")
 
-  records-storage-df       Change the CWD to the project (Common projects)
+  records-storage-eol      Change the CWD to the project (Common projects)
+  records-stoarge-df          "
 
   branch                Report on the repository's branches.
   build                 Build the repository.

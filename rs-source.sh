@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export RS_SOURCE_VERSION=0.3.2
+export RS_SOURCE_VERSION=0.3.5
 
 #
 # Sets environment variables for other scripts. Principally,
@@ -13,7 +13,7 @@ export RS_SOURCE_VERSION=0.3.2
 export WORKDIR="${WORKDIR:-$HOME/github}"
 
 # Maintain order!
-export RS_COMMON_PROJECTS="records-storage-df records-storage-eol"
+export RS_COMMON_PROJECTS="records-storage records-storage-df records-storage-eol records-storage-fsicds records-storage-model records-storage-ram"
 export RS_INTERFACE_PROJECTS="cds-browser cds-export cds-publish-dates cds-spark-ami cds-ui-web sls-bulk-export sls-contextual-treatments slsdata-convert slsdata-gedcomx slsdata-treatments sls-spark-jobs"
 export RS_TEMPLATES_PROJECTS="sls-client-utils slsdata-gedcomx-lite sls-fixup-worker sls-model sls-templates sls-template-store sls-test-utils"
 export RS_INTERNALS_PROJECTS="sls-dlq-worker sls-internal-messaging sls-internal-workers sls-reconcile sls-sqs-worker sls-web-app"
@@ -80,8 +80,11 @@ COMMANDS:
   sls-locking-service         "
   sls-persistence             " (lazy: "persistence")
 
-  records-storage-eol      Change the CWD to the project (Common projects)
+  records-storage         Change the CWD to the project (Common projects)
+  records-storage-eol         "
   records-stoarge-df          "
+  records-storage-fsicds      "
+  records-storage-ram         "
 
   branch                Report on the repository's branches.
   build                 Build the repository.
@@ -381,6 +384,7 @@ The new local repository will be cloned into the 'WORKDIR' directory.
 OPTIONS:
   -a | --all	  Clone all rs repositories.
   -d | --delete	Delete the existing repository before cloning.
+  --common      Clone all common repositories
   --interface   Clone all Interface repositories
   --internals   Clone all Internals repositories
   --templates   Clone all Templates repositories
@@ -413,6 +417,10 @@ rs-clone() {
       -d | --delete)
         shift
         delete_repo=true
+        ;;
+      --common)
+        repositories="$RS_COMMON_PROJECTS"
+        shift
         ;;
       --interface)
         repositories="$RS_INTERFACE_PROJECTS"

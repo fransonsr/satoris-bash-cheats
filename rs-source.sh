@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export RS_SOURCE_VERSION=0.3.5
+export RS_SOURCE_VERSION=0.3.7
 
 #
 # Sets environment variables for other scripts. Principally,
@@ -13,7 +13,7 @@ export RS_SOURCE_VERSION=0.3.5
 export WORKDIR="${WORKDIR:-$HOME/github}"
 
 # Maintain order!
-export RS_COMMON_PROJECTS="records-storage records-storage-df records-storage-eol records-storage-fsicds records-storage-model records-storage-ram"
+export RS_COMMON_PROJECTS="records-storage records-storage-cds-core records-storage-df records-storage-eol records-storage-fsicds records-storage-gedcomx records-storage-model records-storage-ram"
 export RS_INTERFACE_PROJECTS="cds-browser cds-export cds-publish-dates cds-spark-ami cds-ui-web sls-bulk-export sls-contextual-treatments slsdata-convert slsdata-gedcomx slsdata-treatments sls-spark-jobs"
 export RS_TEMPLATES_PROJECTS="sls-client-utils slsdata-gedcomx-lite sls-fixup-worker sls-model sls-templates sls-template-store sls-test-utils"
 export RS_INTERNALS_PROJECTS="sls-dlq-worker sls-internal-messaging sls-internal-workers sls-reconcile sls-sqs-worker sls-web-app"
@@ -22,7 +22,7 @@ export RS_PROJECTS="${RS_COMMON_PROJECTS} ${RS_INTERFACE_PROJECTS} ${RS_TEMPLATE
 
 # Variables used for command completion
 export RS_COMMAND_LAZY="root consumers persistence"
-export RS_COMMANDS="${RS_PROJECTS} status update reset-master branch build clone jakarta-migrate ${RS_COMMAND_LAZY}"
+export RS_COMMANDS="${RS_PROJECTS} status update reset-master branch build build-status clone jakarta-migrate ${RS_COMMAND_LAZY}"
 export RS_OPTIONS="-h --help"
 
 export GITHUB_BASE="https://github.com"
@@ -81,13 +81,16 @@ COMMANDS:
   sls-persistence             " (lazy: "persistence")
 
   records-storage         Change the CWD to the project (Common projects)
+  records-storage-cds-core    "
   records-storage-eol         "
   records-stoarge-df          "
   records-storage-fsicds      "
+  records-storage-gedcomx     "
   records-storage-ram         "
 
   branch                Report on the repository's branches.
   build                 Build the repository.
+  build-status          Report the status of GitHub Action builds.
   clean                 Perform a Maven clean of the project.
   clone                 Clone github repositories.
   graph                 Create dependency graphs.
@@ -537,6 +540,10 @@ rs-build() {
   fi
 }
 
+rs-build-status() {
+  gh run list
+}
+
 rs-graph-usage() {
   cat <<-EOF
   USAGE: rs graph [[-d | --duplicates] | [-v | --versions]]
@@ -681,6 +688,7 @@ USAGE: rs all [[--interface] | [--internals] | [--templates] | [--persistence]] 
 Recursively execute <command> on all of the rs projects.
 
 OPTIONS:
+  --common        Execute command against common (records-*) repositories
   --interface     Execute command against Interface repositories
   --internals     Execute command against Internals repositories
   --templates     Execute command against Templates repositories
@@ -691,6 +699,7 @@ SUPPORTED COMMANDS:
   update
   branch
   build
+  build-status
   reset-master
 
 EOF
@@ -724,6 +733,11 @@ rs-all() {
         ;;
       --persistence)
         projects="$RS_PERSISTENCE_PROJECTS"
+        shift
+        break
+        ;;
+      --common)
+        projects="$RS_COMMON_PROJECTS"
         shift
         break
         ;;
@@ -818,6 +832,11 @@ rs() {
     build)
       shift
       rs-build ${helpargs:+"$helpargs"} "$@"
+      break
+      ;;
+    build-status)
+      shift
+      rs-build-status ${helpargs:+"$helpargs"} "$@"
       break
       ;;
     clone)

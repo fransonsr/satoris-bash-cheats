@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export RS_SOURCE_VERSION=0.3.7
+export RS_SOURCE_VERSION=0.4.0
 
 #
 # Sets environment variables for other scripts. Principally,
@@ -14,10 +14,10 @@ export WORKDIR="${WORKDIR:-$HOME/github}"
 
 # Maintain order!
 export RS_COMMON_PROJECTS="records-storage records-storage-cds-core records-storage-df records-storage-eol records-storage-fsicds records-storage-gedcomx records-storage-model records-storage-ram"
-export RS_INTERFACE_PROJECTS="cds-browser cds-export cds-publish-dates cds-spark-ami cds-ui-web sls-bulk-export sls-contextual-treatments slsdata-convert slsdata-gedcomx slsdata-treatments sls-spark-jobs"
-export RS_TEMPLATES_PROJECTS="sls-client-utils slsdata-gedcomx-lite sls-fixup-worker sls-model sls-templates sls-template-store sls-test-utils"
+export RS_INTERFACE_PROJECTS="cds-browser cds-export cds-publish-dates cds-web-ui sls-bulk-export sls-contextual-treatments slsdata-convert slsdata-gedcomx slsdata-treatments sls-spark-jobs"
+export RS_TEMPLATES_PROJECTS="sls-client-utils slsdata-gedcomx-lite sls-fixup-worker sls-model sls-templates sls-template-store sls-template-logic sls-test-utils"
 export RS_INTERNALS_PROJECTS="sls-dlq-worker sls-internal-messaging sls-internal-workers sls-reconcile sls-sqs-worker sls-web-app"
-export RS_PERSISTENCE_PROJECTS="cds2-root cds-journal-worker cds-sls-model cds-to-gedcomx gedcomx-builder ram ramsak recapi sls-consumers sls-locking-service sls-persistence"
+export RS_PERSISTENCE_PROJECTS="cds2-root cds-journal-worker recapi sls-consumers sls-locking-service sls-persistence sls-record-completion records-storage-counting records-storage-synchronization"
 export RS_PROJECTS="${RS_COMMON_PROJECTS} ${RS_INTERFACE_PROJECTS} ${RS_TEMPLATES_PROJECTS} ${RS_INTERNALS_PROJECTS} ${RS_PERSISTENCE_PROJECTS}"
 
 # Variables used for command completion
@@ -42,51 +42,48 @@ COMMANDS:
   all                 Recursively execute the command in each of the projects
 
   cds-browser              Change the CWD to the project (Interface)
-  cds-export                  "
-  cds-publish-dates           "
-  cds-spark-ami               "
-  cds-ui-web                  "
-  sls-bulk-export             "
-  sls-contextual-treatments   "
-  slsdata-convert             "
-  slsdata-gedcomx             "
-  slsdata-treatments          "
-  sls-spark-jobs              "
+  cds-export                      "
+  cds-publish-dates               "
+  cds-web-ui                      "
+  sls-bulk-export                 "
+  sls-contextual-treatments       "
+  slsdata-convert                 "
+  slsdata-gedcomx                 "
+  slsdata-treatments              "
+  sls-spark-jobs                  "
 
   sls-client-utils        Change the CWD to the project (Templates)
-  slsdata-gedcomx-lite        "
-  sls-fixup-worker            "
-  sls-model                   "
-  sls-templates               "
-  sls-template-store          "
-  sls-test-utils              "
+  slsdata-gedcomx-lite            "
+  sls-fixup-worker                "
+  sls-model                       "
+  sls-templates                   "
+  sls-template-store              "
+  sls-test-utils                  "
 
   sls-dlq-worker          Change the CWD to the project (Internals)
-  sls-internal-messaging      "
-  sls-internal-workers        "
-  sls-reconcile               "
-  sls-sqs-worker              "
-  sls-web-app                 "
+  sls-internal-messaging          "
+  sls-internal-workers            "
+  sls-reconcile                   "
+  sls-sqs-worker                  "
+  sls-web-app                     "
 
   cds2-root               Change the CWD to the project (Persistence; lazy: "root")
-  cds-journal-worker          "
-  cds-sls-model               "
-  cds-to-gedcomx              "
-  gedcomx-builder             "
-  ram                         "
-  ramsak                      "
-  recapi                      "
-  sls-consumers               " (lazy: "consumers")
-  sls-locking-service         "
-  sls-persistence             " (lazy: "persistence")
+  cds-journal-worker              "
+  recapi                          "
+  sls-consumers                   " (lazy: "consumers")
+  sls-locking-service             "
+  sls-persistence                 " (lazy: "persistence")
+  sls-record-completion           "
 
   records-storage         Change the CWD to the project (Common projects)
-  records-storage-cds-core    "
-  records-storage-eol         "
-  records-stoarge-df          "
-  records-storage-fsicds      "
-  records-storage-gedcomx     "
-  records-storage-ram         "
+  records-storage-cds-core        "
+  records-storage-eol             "
+  records-stoarge-df              "
+  records-storage-fsicds          "
+  records-storage-gedcomx         "
+  records-storage-ram             "
+  records-storage-counting        "
+  records-storage-synchronization "
 
   branch                Report on the repository's branches.
   build                 Build the repository.
@@ -541,7 +538,7 @@ rs-build() {
 }
 
 rs-build-status() {
-  gh run list
+  gh run list --limit 5
 }
 
 rs-graph-usage() {

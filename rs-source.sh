@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export RS_SOURCE_VERSION=0.4.0
+export RS_SOURCE_VERSION=0.5.0
 
 #
 # Sets environment variables for other scripts. Principally,
@@ -13,16 +13,14 @@ export RS_SOURCE_VERSION=0.4.0
 export WORKDIR="${WORKDIR:-$HOME/github}"
 
 # Maintain order!
-export RS_COMMON_PROJECTS="records-storage records-storage-cds-core records-storage-df records-storage-eol records-storage-fsicds records-storage-gedcomx records-storage-model records-storage-ram"
-export RS_INTERFACE_PROJECTS="cds-browser cds-export cds-publish-dates cds-web-ui sls-bulk-export sls-contextual-treatments slsdata-convert slsdata-gedcomx slsdata-treatments sls-spark-jobs"
-export RS_TEMPLATES_PROJECTS="sls-client-utils slsdata-gedcomx-lite sls-fixup-worker sls-model sls-templates sls-template-store sls-template-logic sls-test-utils"
-export RS_INTERNALS_PROJECTS="sls-dlq-worker sls-internal-messaging sls-internal-workers sls-reconcile sls-sqs-worker sls-web-app"
-export RS_PERSISTENCE_PROJECTS="cds2-root cds-journal-worker recapi sls-consumers sls-locking-service sls-persistence sls-record-completion records-storage-counting records-storage-synchronization"
-export RS_PROJECTS="${RS_COMMON_PROJECTS} ${RS_INTERFACE_PROJECTS} ${RS_TEMPLATES_PROJECTS} ${RS_INTERNALS_PROJECTS} ${RS_PERSISTENCE_PROJECTS}"
+export RS_COMMON_PROJECTS="records-storage-cds-core records-storage-df records-storage-eol records-storage-fsicds records-storage-gedcomx records-storage-model records-storage-ram"
+export RS_LIB_PROJECTS="sls-model slsdata-gedcomx sls-reconcile slsdata-convert sls-persistence slsdata-gedcomx-lite sls-internal-messaging"
+export RS_APP_PROJECTS="cds2-root recapi cds-journal-worker sls-internal-workers sls-consumers sls-bulk-export sls-dlq-worker sls-web-app sls-sqs-worker sls-record-completion records-storage-counting records-storage-synchronization"
+export RD_LIB_PROJECTS="sls-templates sls-test-utils sls-client-utils slsdata-treatments sls-template-logic"
+export RS_PROJECTS="records-storage ${RS_COMMON_PROJECTS} ${RS_LIB_PROJECTS} ${RS_APP_PROJECTS}"
 
 # Variables used for command completion
-export RS_COMMAND_LAZY="root consumers persistence"
-export RS_COMMANDS="${RS_PROJECTS} status update reset-master branch build build-status clone jakarta-migrate ${RS_COMMAND_LAZY}"
+export RS_COMMANDS="${RS_PROJECTS} ${RD_LIB_PROJECTS} status update reset-master branch build build-status clone jakarta-migrate"
 export RS_OPTIONS="-h --help"
 
 export GITHUB_BASE="https://github.com"
@@ -41,49 +39,41 @@ USAGE: rs [all] [[-h|--help]] <command>
 COMMANDS:
   all                 Recursively execute the command in each of the projects
 
-  cds-browser              Change the CWD to the project (Interface)
-  cds-export                      "
-  cds-publish-dates               "
-  cds-web-ui                      "
-  sls-bulk-export                 "
-  sls-contextual-treatments       "
-  slsdata-convert                 "
-  slsdata-gedcomx                 "
-  slsdata-treatments              "
-  sls-spark-jobs                  "
+  records-storage           Change the CWD to the project
 
-  sls-client-utils        Change the CWD to the project (Templates)
-  slsdata-gedcomx-lite            "
-  sls-fixup-worker                "
-  sls-model                       "
-  sls-templates                   "
-  sls-template-store              "
-  sls-test-utils                  "
-
-  sls-dlq-worker          Change the CWD to the project (Internals)
-  sls-internal-messaging          "
-  sls-internal-workers            "
-  sls-reconcile                   "
-  sls-sqs-worker                  "
-  sls-web-app                     "
-
-  cds2-root               Change the CWD to the project (Persistence; lazy: "root")
-  cds-journal-worker              "
-  recapi                          "
-  sls-consumers                   " (lazy: "consumers")
-  sls-locking-service             "
-  sls-persistence                 " (lazy: "persistence")
-  sls-record-completion           "
-
-  records-storage         Change the CWD to the project (Common projects)
-  records-storage-cds-core        "
+  records-storage-cds-core  Change the CWD to the project (RS_COMMON_PROJECTS)
   records-storage-eol             "
-  records-stoarge-df              "
+  records-storage-df              "
   records-storage-fsicds          "
   records-storage-gedcomx         "
   records-storage-ram             "
+
+  sls-model                 Change the CWD to the project (RS_LIB_PROJECTS)
+  slsdata-gedcomx                 "
+  sls-reconcile                   "
+  slsdata-convert                 "
+  sls-persistence                 "
+  slsdata-gedcomx-lite            "
+  sls-internal-messaging          "
+
+  cds2-root                 Change the CWD to the project (RS_APP_PROJECTS)
+  recapi                          "
+  cds-journal-worker              "
+  sls-internal-workers            "
+  sls-consumers                   "
+  sls-bulk-export                 "
+  sls-dlq-worker                  "
+  sls-web-app                     "
+  sls-sqs-worker                  "
+  sls-record-completion           "
   records-storage-counting        "
   records-storage-synchronization "
+
+  sls-templates           Change the CWD to the project (RD_LIB_PROJECTS)
+  sls-test-utils                  "
+  sls-client-utils                "
+  slsdata-treatments              "
+  sls-template-logic              "
 
   branch                Report on the repository's branches.
   build                 Build the repository.
@@ -94,7 +84,7 @@ COMMANDS:
   reset-master          Force a reset of the local master branch to the remote branch.
   status                Check the git status of the repository.
   update                Update the repository.
-  jakarta-migrate       Run Openrewrite's migration of Java EE to Jakarta EE libraries.
+  versions              Update the version properties in the Maven pom.xml file.
 
 OPTIONS:
   -h | --help           Display this help. If a command follows, command-
@@ -376,7 +366,7 @@ _rs-clone() {
 
 rs-clone-usage() {
   cat <<-EOF
-USAGE rs clone [[-a | --all] | [-d | --delete] | [--interface] | [--internals] | [--templates] | [--persistence]] <repo name(s)>
+USAGE rs clone [[-a | --all] | [-d | --delete] | [--common] | [--lib] | [--apps] | [--rd-lib]] <repo name(s)>
 
 Clone the github repositories specified by the space-delimited list of repository names.
 The new local repository will be cloned into the 'WORKDIR' directory.
@@ -385,10 +375,9 @@ OPTIONS:
   -a | --all	  Clone all rs repositories.
   -d | --delete	Delete the existing repository before cloning.
   --common      Clone all common repositories
-  --interface   Clone all Interface repositories
-  --internals   Clone all Internals repositories
-  --templates   Clone all Templates repositories
-  --persistence Clone all Persistence repositories
+  --lib         Clone all library repositories
+  --app         Clone all application repositories
+  --rd-lib      Clone all RD library repositories
 EOF
 }
 
@@ -419,23 +408,19 @@ rs-clone() {
         delete_repo=true
         ;;
       --common)
-        repositories="$RS_COMMON_PROJECTS"
+        repositories+="$RS_COMMON_PROJECTS"
         shift
         ;;
-      --interface)
-        repositories="$RS_INTERFACE_PROJECTS"
+      --lib)
+        repositories+="$RS_LIB_PROJECTS"
         shift
         ;;
-      --internals)
-        repositories="$RS_INTERNALS_PROJECTS"
+      --app)
+        repositories+="$RS_APP_PROJECTS"
         shift
         ;;
-      --templates)
-        repositories="$RS_TEMPLATES_PROJECTS"
-        shift
-        ;;
-      --persistence)
-        repositories="$RS_PERSISTENCE_PROJECTS"
+      --rd-lib)
+        repositories+="$RD_LIB_PROJECTS"
         shift
         ;;
       *)
@@ -444,6 +429,10 @@ rs-clone() {
         ;;
     esac
   done
+
+  if [ -z "$repositories" ]; then
+    repositories="$RS_PROJECTS"
+  fi
 
   pushd $WORKDIR >/dev/null || exit
 
@@ -594,11 +583,173 @@ rs-clean() {
   mvn clean
 }
 
-rs-jakarta-migrate() {
-  # main Jakarta EE libraries
-  mvn -U org.openrewrite.maven:rewrite-maven-plugin:run \
-    -Drewrite.recipeArtifactCoordinates=org.openrewrite.recipe:rewrite-migrate-java:RELEASE \
-    -Drewrite.activeRecipes=org.openrewrite.java.migrate.jakarta.JavaxMigrationToJakarta
+_rs-versions() {
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  COMPREPLY=($(compgen -W "-k -keep-branch -l --local -s --skip-build -d --draft-pr -p --parent -t --title" -- "$cur"))
+}
+
+rs-versions-usage() {
+  cat <<-EOF
+USAGE: rs versions [[-p | --parent] [-k | --keep-branch] [-l | --local] [-s | --skip-build] [-t <title> | --title <title>]]
+
+Update the Maven properties for the rs dependencies (parent pom and core dependencies).
+See the Maven pom.xml configuration for the versions plugin.
+
+OPTIONS:
+  -p | --parent         Update parent pom version
+  -k | --keep-branch    Keep the current branch (don't base the change on 'master')
+  -l | --local          Make all changes local only (no commit, push, or PR)
+  -s | --skip-build     Skip the sanity build
+  -d | --draft-pr       Make the PR a draft
+  -t | --title          PR title (default: "Update versions")
+
+By default, this script will do the following:
+  - checkout the master branch
+  - update the local branch from the up-stream remote (via 'pull')
+  - checkout a new branch
+  - update the Maven parent pom version (if selected)
+  - update the Maven property versions
+  - do a clean, sanity build
+  - commit the changes
+  - push the branch to the remote
+  - create a PR
+
+EOF
+}
+
+rs-versions() {
+  local parent_pom
+  local keep_branch
+  local local_only
+  local build
+  local quiet
+  local draft_pr
+  local pr_title
+
+  keep_branch=false
+  local_only=false
+  build=true
+  draft_pr=false
+  pr_title="Update versions"
+
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      -h | --help)
+        rs-versions-usage
+        RS_ERROR="rs-versions - command help"
+        return
+        ;;
+      -p | --parent)
+        parent_pom=true
+        shift
+        ;;
+      -k | --keep-branch)
+        keep_branch=true
+        shift
+        ;;
+      -l | --local)
+        local_only=true
+        shift
+        ;;
+      -s | --skip-build)
+        build=false
+        shift
+        ;;
+      -d | --draft-pr)
+        draft_pr=true
+        shift
+        ;;
+      -t | --title)
+        shift
+        pr_title="$1"
+        shift
+        ;;
+      *)
+        echo Option \'"$1"\' not recognized.
+        rs-versions-usage
+        RS_ERROR="rs-versions - options"
+        return 1
+        ;;
+    esac
+  done
+
+  local current_branch
+  current_branch="$(currentBranch)"
+
+  if ! $keep_branch; then
+    local branch_name
+
+    branch_name="versions-${RANDOM}"
+
+    if isDirectoryClean; then
+      if [[ "$current_branch" != "master" ]]; then
+        git checkout master
+      fi
+
+      git pull
+      git checkout -b "${branch_name}"
+      current_branch="${branch_name}"
+    else
+      echo Unclean git working directory.
+      RS_ERROR="rs-versions - change to master"
+      return 1
+    fi
+  else
+    echo Keeping current branch \["${current_branch}"\].
+  fi
+
+  local mvn_goals
+  mvn_goals="versions:update-properties versions:commit"
+  if $parent_pom; then
+    mvn_goals="versions:update-parent ${mvn_goals}"
+  fi
+
+  mvn -U ${mvn_goals}
+
+  if isDirectoryClean; then
+    echo No modifications to the branch.
+    git checkout master
+    git branch -d "${branch_name}"
+    return 0
+  fi
+
+  if $build; then
+    if ! rs-build; then
+      echo Build failed!
+      return 1
+    fi
+  else
+    echo Skipping sanity build.
+  fi
+
+  if ! $local_only; then
+    git commit -am "Update versions"
+    git push -u origin "${current_branch}"
+
+    local gh_options
+
+    if $draft_pr; then
+      gh_options="--draft"
+    fi
+    gh pr create ${gh_options} --body "" --title "${pr_title}"
+
+    local pr_url
+
+    pr_url="$(gh pr view | grep url | cut -f2)"
+    if [ -n "${pr_url}" ]; then
+      if [ -n "${SLACK_THREAD_ID}" ]; then
+        rs-slack -t "${SLACK_THREAD_ID}" "PR (${pr_title}): ${pr_url}"
+      else
+        rs-slack "PR (update versions): ${pr_url}"
+      fi
+    else
+      echo No PR URL found.
+      RS_ERROR="rs-versions - no PR URL"
+      return 1
+    fi
+  else
+    echo Skipping git commit.
+  fi
 }
 
 _rs-all() {
@@ -632,6 +783,10 @@ _rs-all() {
         break
         ;;
       clean)
+        subcommand_index=$i
+        break
+        ;;
+      versions)
         subcommand_index=$i
         break
         ;;
@@ -670,6 +825,10 @@ _rs-all() {
         COMPREPLY=()
         return
         ;;
+      versions)
+        _rs-versions
+        return
+        ;;
     esac
     (( subcommand_index++ ))
   done
@@ -680,16 +839,18 @@ _rs-all() {
 
 rs-all-usage() {
   cat <<-EOF
-USAGE: rs all [[--interface] | [--internals] | [--templates] | [--persistence]] <command>
+USAGE: rs all [[--common] | [--lib] | [--app] | [--rd-lib] | [-f <repo> | --from <repo>]] <command>
 
 Recursively execute <command> on all of the rs projects.
 
 OPTIONS:
-  --common        Execute command against common (records-*) repositories
-  --interface     Execute command against Interface repositories
-  --internals     Execute command against Internals repositories
-  --templates     Execute command against Templates repositories
-  --persistence   Execute command against Persistence repositories
+  --common                    Execute command against common (records-*) lib repositories
+  --lib                       Execute command against all library repositories
+  --app                       Execute command against all application repositories
+  --rd-lib                    Execute command against all RD library repositories
+  -f <repo> | --from <repo>   Begin execution with '<repo>'
+
+The default is '--common --lib --app'.
 
 SUPPORTED COMMANDS:
   status
@@ -698,13 +859,15 @@ SUPPORTED COMMANDS:
   build
   build-status
   reset-master
+  versions
 
 EOF
 }
 
 rs-all() {
   local projects
-  projects="$RS_PROJECTS"
+  projects=""
+  from_project=""
 
   while [ $# -gt 0 ]; do
     case "$1" in
@@ -713,30 +876,26 @@ rs-all() {
         RS_ERROR="rs-all - command help"
         return
         ;;
-      --interface)
-        projects="$RS_INTERFACE_PROJECTS"
-        shift
-        break
-        ;;
-      --internals)
-        projects="$RS_INTERNALS_PROJECTS"
-        shift
-        break
-        ;;
-      --templates)
-        projects="$RS_TEMPLATES_PROJECTS"
-        shift
-        break
-        ;;
-      --persistence)
-        projects="$RS_PERSISTENCE_PROJECTS"
-        shift
-        break
-        ;;
       --common)
-        projects="$RS_COMMON_PROJECTS"
+        projects+=" $RS_COMMON_PROJECTS"
         shift
-        break
+        ;;
+      --lib)
+        projects+=" $RS_LIB_PROJECTS"
+        shift
+        ;;
+      --app)
+        projects+=" $RS_APP_PROJECTS"
+        shift
+        ;;
+      --rd-lib)
+        projects=" $RD_LIB_PROJECTS"
+        shift
+        ;;
+      -f | --from)
+        shift
+        from_project="$1"
+        shift
         ;;
       *)
         break
@@ -744,9 +903,19 @@ rs-all() {
     esac
   done
 
+  if [ -z "$projects" ]; then
+    projects="$RS_PROJECTS"
+  fi
+
   pushd . >/dev/null
 
   for dir in $projects; do
+    if [[ ("$from_project" != "") && ("$dir" != "$from_project") ]];
+    then
+      echo "Skipping project $dir"
+      continue
+    fi
+    from_project=""
     echo ========================
     echo PROJECT - "$dir"
     cd "$WORKDIR/$dir" || {
@@ -788,22 +957,6 @@ rs() {
     all)
       shift
       rs-all "$@"
-      break
-      ;;
-    # lazy project names
-    cds2-root | root)
-      project=${project:-cds2-root}
-      ;&
-    sls-consumers | consumers)
-      project=${project:-sls-consumers}
-      ;&
-    sls-persistence | persistence)
-     project=${project:-sls-persistence}
-      # if a lazy option is not used, use the first argument
-      local argOne=${project:-$1}
-      # regardless, shift the argument list
-      shift
-      cdToProject ${helpargs:+"$helpargs"} "$argOne" "$@"
       break
       ;;
     status)
@@ -851,9 +1004,9 @@ rs() {
       rs-graph ${helpargs:+"$helpargs"} "$@"
       break
       ;;
-    jakarta-migrate)
+    versions)
       shift
-      rs-jakarta-migrate ${helpargs:+"$helpargs"} "$@"
+      rs-versions ${helpargs:+"$helpargs"} "$@"
       break
       ;;
     --) # end of all options
@@ -932,6 +1085,10 @@ _rs() {
       ;;
     graph)
       _rs-graph
+      return 0
+      ;;
+    versions)
+      _idx-versions
       return 0
       ;;
     *)

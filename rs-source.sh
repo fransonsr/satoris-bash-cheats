@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export RS_SOURCE_VERSION=0.5.0
+export RS_SOURCE_VERSION=0.5.2
 
 #
 # Sets environment variables for other scripts. Principally,
@@ -15,7 +15,7 @@ export WORKDIR="${WORKDIR:-$HOME/github}"
 # Maintain order!
 export RS_COMMON_PROJECTS="records-storage-cds-core records-storage-df records-storage-eol records-storage-fsicds records-storage-gedcomx records-storage-model records-storage-ram"
 export RS_LIB_PROJECTS="sls-model slsdata-gedcomx sls-reconcile slsdata-convert sls-persistence slsdata-gedcomx-lite sls-internal-messaging"
-export RS_APP_PROJECTS="cds2-root recapi cds-journal-worker sls-internal-workers sls-consumers sls-bulk-export sls-dlq-worker sls-web-app sls-sqs-worker sls-record-completion records-storage-counting records-storage-synchronization"
+export RS_APP_PROJECTS="cds2-root recapi cds-journal-worker sls-internal-workers sls-consumers sls-bulk-export sls-data-lake sls-dlq-worker sls-web-app sls-sqs-worker sls-record-completion records-storage-counting records-storage-synchronization"
 export RD_LIB_PROJECTS="sls-templates sls-test-utils sls-client-utils slsdata-treatments sls-template-logic"
 export RS_PROJECTS="records-storage ${RS_COMMON_PROJECTS} ${RS_LIB_PROJECTS} ${RS_APP_PROJECTS}"
 
@@ -63,6 +63,7 @@ COMMANDS:
   sls-consumers                   "
   sls-bulk-export                 "
   sls-dlq-worker                  "
+  sls-data-lake                   "
   sls-web-app                     "
   sls-sqs-worker                  "
   sls-record-completion           "
@@ -81,6 +82,7 @@ COMMANDS:
   clean                 Perform a Maven clean of the project.
   clone                 Clone github repositories.
   graph                 Create dependency graphs.
+  dep-tree              Generate the dependency tree for the project's artifacts.
   reset-master          Force a reset of the local master branch to the remote branch.
   status                Check the git status of the repository.
   update                Update the repository.
@@ -579,6 +581,11 @@ rs-graph() {
 
 }
 
+rs-dep-tree() {
+  mkdir -p target
+  mvn dependency:tree > target/dependency-tree.txt
+}
+
 rs-clean() {
   mvn clean
 }
@@ -733,20 +740,6 @@ rs-versions() {
     fi
     gh pr create ${gh_options} --body "" --title "${pr_title}"
 
-    local pr_url
-
-    pr_url="$(gh pr view | grep url | cut -f2)"
-    if [ -n "${pr_url}" ]; then
-      if [ -n "${SLACK_THREAD_ID}" ]; then
-        rs-slack -t "${SLACK_THREAD_ID}" "PR (${pr_title}): ${pr_url}"
-      else
-        rs-slack "PR (update versions): ${pr_url}"
-      fi
-    else
-      echo No PR URL found.
-      RS_ERROR="rs-versions - no PR URL"
-      return 1
-    fi
   else
     echo Skipping git commit.
   fi
@@ -787,6 +780,10 @@ _rs-all() {
         break
         ;;
       versions)
+        subcommand_index=$i
+        break
+        ;;
+      dep-tree)
         subcommand_index=$i
         break
         ;;
@@ -860,6 +857,7 @@ SUPPORTED COMMANDS:
   build-status
   reset-master
   versions
+  dep-tree
 
 EOF
 }
@@ -1007,6 +1005,11 @@ rs() {
     versions)
       shift
       rs-versions ${helpargs:+"$helpargs"} "$@"
+      break
+      ;;
+    dep-tree)
+      shift
+      rs-dep-tree ${helpargs:+"$helpargs"} "$@"
       break
       ;;
     --) # end of all options

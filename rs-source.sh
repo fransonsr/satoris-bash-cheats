@@ -15,7 +15,7 @@ export WORKDIR="${WORKDIR:-$HOME/github}"
 # Maintain order!
 export RS_COMMON_PROJECTS="records-storage-cds-core records-storage-df records-storage-eol records-storage-fsicds records-storage-gedcomx records-storage-model records-storage-ram"
 export RS_LIB_PROJECTS="sls-model slsdata-gedcomx sls-reconcile slsdata-convert sls-persistence slsdata-gedcomx-lite sls-internal-messaging"
-export RS_APP_PROJECTS="cds2-root recapi cds-journal-worker sls-internal-workers sls-consumers sls-bulk-export sls-data-lake sls-dlq-worker sls-web-app sls-sqs-worker sls-record-completion records-storage-counting records-storage-synchronization"
+export RS_APP_PROJECTS="cds2-root recapi cds-journal-worker sls-internal-workers sls-consumers sls-bulk-export sls-data-lake sls-dlq-worker sls-web-app sls-sqs-worker sls-record-completion records-storage-counting records-storage-synchronization sls-beta-update"
 export RD_LIB_PROJECTS="sls-templates sls-test-utils sls-client-utils slsdata-treatments sls-template-logic"
 export RS_PROJECTS="records-storage ${RS_COMMON_PROJECTS} ${RS_LIB_PROJECTS} ${RS_APP_PROJECTS}"
 
@@ -69,6 +69,7 @@ COMMANDS:
   sls-record-completion           "
   records-storage-counting        "
   records-storage-synchronization "
+  sls-beta-update                 "
 
   sls-templates           Change the CWD to the project (RD_LIB_PROJECTS)
   sls-test-utils                  "
